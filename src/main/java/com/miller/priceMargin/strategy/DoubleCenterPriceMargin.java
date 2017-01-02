@@ -129,8 +129,10 @@ public class DoubleCenterPriceMargin {
                     log.info("深度价格足够，币数量不足,ok买方持币数量：" + okBidAmount + "，huobi卖方持币数量:" + hbAskAmount);
                 }
             } else {
-                if (System.currentTimeMillis() - pong >= pongTime) {
+                long now = System.currentTimeMillis();
+                if (now - pong >= pongTime) {
                     log.warn("okcoin has coin pong!");
+                    pong = now;
                 }
             }
         } else {//火币持币
@@ -141,8 +143,10 @@ public class DoubleCenterPriceMargin {
                     log.info("深度价格足够，币数量不足,hb买方持币数量：" + okBidAmount + "，ok卖方持币数量:" + hbAskAmount);
                 }
             } else {
-                if (System.currentTimeMillis() - pong >= pongTime) {
+                long now = System.currentTimeMillis();
+                if (now - pong >= pongTime) {
                     log.warn("okcoin has coin pong!");
+                    pong = now;
                 }
             }
         }
