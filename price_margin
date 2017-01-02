@@ -1,0 +1,8 @@
+INFO Refreshing org.springframework.context.support.ClassPathXmlApplicationContext@2038ae61: startup date [Sun Jan 01 23:06:01 CST 2017]; root of context hierarchy - [org.springframework.context.support.ClassPathXmlApplicationContext 581] - 23:06:01 
+INFO Loading XML bean definitions from class path resource [spring/Application-context.xml] - [org.springframework.beans.factory.xml.XmlBeanDefinitionReader 317] - 23:06:01 
+INFO Loading properties file from URL [file:/E:/millerStrategy/target/classes/config/jdbc.properties] - [org.springframework.beans.factory.config.PropertyPlaceholderConfigurer 172] - 23:06:02 
+INFO {dataSource-1} inited - [com.alibaba.druid.pool.DruidDataSource 721] - 23:06:03 
+INFO Refreshing org.springframework.context.support.ClassPathXmlApplicationContext@2038ae61: startup date [Sun Jan 01 23:08:14 CST 2017]; root of context hierarchy - [org.springframework.context.support.ClassPathXmlApplicationContext 581] - 23:08:14 
+INFO Loading XML bean definitions from class path resource [spring/Application-context.xml] - [org.springframework.beans.factory.xml.XmlBeanDefinitionReader 317] - 23:08:14 
+INFO Loading properties file from URL [file:/E:/millerStrategy/target/classes/config/jdbc.properties] - [org.springframework.beans.factory.config.PropertyPlaceholderConfigurer 172] - 23:08:15 
+INFO {dataSource-1} inited - [com.alibaba.druid.pool.DruidDataSource 721] - 23:08:16 
