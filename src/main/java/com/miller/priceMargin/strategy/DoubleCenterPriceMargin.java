@@ -150,27 +150,30 @@ public class DoubleCenterPriceMargin {
     private long pongTime = 300000;
 
     private void reckonGains(long okTID, long hbTID, BigDecimal okPrice, BigDecimal hbPrice, Integer hasCoin) {
+        boolean flag = true;
         int count = 0;
-        count++;
-        sleep(300);
-
-        String ret = huobiApi.getOrderInfo(1, hbTID, "order_info");
-        OrderInfo hbOrderInfo = resultHandle.getOrderInfo(ret, "huobi");
-        OrderInfo okOrderInfo = resultHandle.getOrderInfo(okcoinService.order_info("btc_cny", okTID), "okcoin");
-        updateLastPrice();//修改最新净资产
-        /**订单可能未成交，或者数据没同步 递归调用**/
-        BigDecimal hbDeal = hbOrderInfo.getDealAmount();
-        BigDecimal okDeal = okOrderInfo.getDealAmount();
-        if (hbDeal.compareTo(BigDecimal.ZERO) == 0
-                || okDeal.compareTo(BigDecimal.ZERO) == 0
-                || hbDeal.compareTo(hbOrderInfo.getAmount()) == -1
-                || okDeal.compareTo(okOrderInfo.getAmount()) == -1) {
-            if (count > 20) {
-                log.error("订单详情调用失败或没有完全成交，数据库订单少记录一笔！hbTid = " + hbTID + ",okTid = " + okTID);
-                return;
+        OrderInfo hbOrderInfo = null;
+        OrderInfo okOrderInfo = null;
+        while (flag) {
+            sleep(300);
+            count++;
+            hbOrderInfo = resultHandle.getOrderInfo(huobiApi.getOrderInfo(1, hbTID, "order_info"), "huobi");
+            okOrderInfo = resultHandle.getOrderInfo(okcoinService.order_info("btc_cny", okTID), "okcoin");
+            /**订单可能未成交，或者数据没同步 循环调用**/
+            BigDecimal hbDeal = hbOrderInfo.getDealAmount();
+            BigDecimal okDeal = okOrderInfo.getDealAmount();
+            if (hbDeal.compareTo(BigDecimal.ZERO) == 0
+                    || okDeal.compareTo(BigDecimal.ZERO) == 0
+                    || hbDeal.compareTo(hbOrderInfo.getAmount()) == -1
+                    || okDeal.compareTo(okOrderInfo.getAmount()) == -1) {
+                if (count > 20) {
+                    log.error("订单详情调用失败或没有完全成交，数据库订单少记录一笔！hbTid = " + hbTID + ",okTid = " + okTID);
+                    return;
+                }
             } else
-                reckonGains(okTID, hbTID, okPrice, hbPrice, hasCoin);
+                flag = false;
         }
+        updateLastPrice();//修改最新净资产
         BigDecimal okAvgPrice = okOrderInfo.getAvgPrice();
         BigDecimal hbAvgPrice = hbOrderInfo.getAvgPrice();
         BigDecimal expectGains, realGains;
