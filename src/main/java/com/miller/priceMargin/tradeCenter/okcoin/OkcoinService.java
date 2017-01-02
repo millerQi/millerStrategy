@@ -73,6 +73,7 @@ public class OkcoinService {
      */
     private final String ORDER_HISTORY_URL = "/api/v1/order_history.do";
 
+
     public BigDecimal ticker(String symbol) {
         HttpUtilManager httpUtil = HttpUtilManager.getInstance();
         String param = "";

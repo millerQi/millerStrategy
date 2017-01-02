@@ -25,6 +25,7 @@ public class HuobiMain {
             System.out.println(service.buyMarket(1, "2", null, BUY_MARKET));
             // 取消订单接口
             System.out.println(service.cancelOrder(1, 160801, CANCEL_ORDER));
+
             // 获取账号详情
             System.out.println(service.getAccountInfo());
             // 查询个人最新10条成交订单

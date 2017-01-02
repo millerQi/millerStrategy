@@ -170,6 +170,7 @@ public class PriceMarginService {
         executeUpdate(getConnection(), sql);
     }
 
+
     public void updateLastPrice(BigDecimal okNetAsset, BigDecimal hbNetAsset) {
         String sql = "update initialization set ok_last_price = " + okNetAsset + ",set hb_last_price = " + hbNetAsset;
         executeUpdate(getConnection(), sql);

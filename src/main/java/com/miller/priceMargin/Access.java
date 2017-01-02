@@ -12,6 +12,7 @@ import java.util.Properties;
  * Created by Miller on 2017/1/1.
  */
 public class Access {
+
     public static void main(String[] args) throws InterruptedException {
         loadProperties();
         ApplicationContext context = new ClassPathXmlApplicationContext("classpath:spring/Application-context.xml");

@@ -14,6 +14,7 @@ public class InitializationData {//初始化数据相关
     private BigDecimal hbFreePrice;//程序初始时hb净资产
     private BigDecimal hbLastPrice;//最新净资产
 
+
     public BigDecimal getGains() {
         return gains;
     }

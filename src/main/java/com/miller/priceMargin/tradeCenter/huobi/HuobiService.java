@@ -110,6 +110,7 @@ public class HuobiService extends Base {
         return post(paraMap, HUOBI_API_URL);
     }
 
+
     /**
      * 查询个人最新10条成交订单
      *

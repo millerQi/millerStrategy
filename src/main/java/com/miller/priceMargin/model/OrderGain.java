@@ -11,6 +11,7 @@ public class OrderGain {//套利订单关联表-相当于日志表
     private BigDecimal gains;//单笔套利盈利
     private Long buyOrderId;//买方订单ID
 
+
     public Long getId() {
         return id;
     }

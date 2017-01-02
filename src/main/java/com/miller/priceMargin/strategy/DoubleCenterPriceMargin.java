@@ -43,6 +43,7 @@ public class DoubleCenterPriceMargin {
 
     private static Integer b = -1;
 
+
     /**
      * 搬砖套利
      */

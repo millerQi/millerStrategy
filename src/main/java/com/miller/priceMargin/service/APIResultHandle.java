@@ -58,6 +58,7 @@ public class APIResultHandle {
         return null;
     }
 
+
     public BigDecimal getNetAsset(String ret, String center) {
         if (StringUtil.isEmpty(ret) || StringUtil.isEmpty(center))
             return null;

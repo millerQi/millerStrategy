@@ -30,7 +30,7 @@ public class BaseTest {
 
     @Test
     public void testUserInfo() {
-        System.out.println(resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin"));
-        System.out.println(resultHandle.getNetAsset(huobiService.getAccountInfo(), "huobi"));
+//        System.out.println(resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin"));
+//        System.out.println(resultHandle.getNetAsset(huobiService.getAccountInfo(), "huobi"));
     }
 }
