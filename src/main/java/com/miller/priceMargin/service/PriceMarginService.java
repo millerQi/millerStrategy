@@ -57,11 +57,6 @@ public class PriceMarginService {
         return executeUpdate(getConnection(), sql);
     }
 
-    public Integer updateNetAssets(BigDecimal okcoinPrice, BigDecimal hbPrice) {
-        String sql = "update initialization_data set ok_free_price = " + okcoinPrice + ",set hb_free_price = " + hbPrice;
-        return executeUpdate(getConnection(), sql);
-    }
-
     public Integer getHasCoin() {
         String sql = "select has_coin from initialization_data";
         String ret = getFirRow(getConnection(), sql);
@@ -166,13 +161,13 @@ public class PriceMarginService {
     }
 
     public void updateFreePrice(BigDecimal okNetAsset, BigDecimal hbNetAsset) {
-        String sql = "update initialization set ok_free_price = " + okNetAsset + ",set hb_free_price = " + hbNetAsset;
+        String sql = "update initialization_data set ok_free_price = " + okNetAsset + ", hb_free_price = " + hbNetAsset;
         executeUpdate(getConnection(), sql);
     }
 
 
     public void updateLastPrice(BigDecimal okNetAsset, BigDecimal hbNetAsset) {
-        String sql = "update initialization set ok_last_price = " + okNetAsset + ",set hb_last_price = " + hbNetAsset;
+        String sql = "update initialization_data set ok_last_price = " + okNetAsset + ", hb_last_price = " + hbNetAsset;
         executeUpdate(getConnection(), sql);
     }
 }
