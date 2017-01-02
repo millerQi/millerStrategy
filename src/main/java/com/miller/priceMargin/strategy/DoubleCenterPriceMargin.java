@@ -1,6 +1,5 @@
 package com.miller.priceMargin.strategy;
 
-import com.miller.priceMargin.Access;
 import com.miller.priceMargin.model.Order;
 import com.miller.priceMargin.model.OrderGain;
 import com.miller.priceMargin.model.order.OrderInfo;
@@ -18,8 +17,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Created by Miller on 2017/1/1.
@@ -45,8 +42,6 @@ public class DoubleCenterPriceMargin {
     private static Integer a = 1;
 
     private static Integer b = -1;
-
-    private static BigDecimal gains = BigDecimal.ZERO;//总盈利
 
     /**
      * 搬砖套利
