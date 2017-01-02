@@ -168,6 +168,7 @@ public class DoubleCenterPriceMargin {
                     || okDeal.compareTo(okOrderInfo.getAmount()) == -1) {
                 if (count > 20) {
                     log.error("订单详情调用失败或没有完全成交，数据库订单少记录一笔！hbTid = " + hbTID + ",okTid = " + okTID);
+                    updateLastPrice();//修改最新净资产
                     return;
                 }
             } else
@@ -186,7 +187,6 @@ public class DoubleCenterPriceMargin {
         }
         Long hbId = saveOrder(hbOrderInfo, "huobi", hbPrice);
         Long okId = saveOrder(okOrderInfo, "okcoin", okPrice);
-
 
         saveOrderGain(hbId, okId, realGains, hasCoin);
         log.warn("搬砖完成--起始价格--okcoin:" + okPrice + ",huobi:" + hbPrice + "--实际成交价--okcoin:" + okAvgPrice + ",huobi:" + hbAvgPrice);
