@@ -10,8 +10,6 @@ public class OrderGain {//套利订单关联表-相当于日志表
     private Long sellOrderId;//卖方订单ID
     private BigDecimal gains;//单笔套利盈利
     private Long buyOrderId;//买方订单ID
-    private BigDecimal okFreePrice;//交易后ok可用资金
-    private BigDecimal hbFreePrice;//交易后hb可用资金
 
     public Long getId() {
         return id;
@@ -45,19 +43,4 @@ public class OrderGain {//套利订单关联表-相当于日志表
         this.buyOrderId = buyOrderId;
     }
 
-    public BigDecimal getOkFreePrice() {
-        return okFreePrice;
-    }
-
-    public void setOkFreePrice(BigDecimal okFreePrice) {
-        this.okFreePrice = okFreePrice;
-    }
-
-    public BigDecimal getHbFreePrice() {
-        return hbFreePrice;
-    }
-
-    public void setHbFreePrice(BigDecimal hbFreePrice) {
-        this.hbFreePrice = hbFreePrice;
-    }
 }

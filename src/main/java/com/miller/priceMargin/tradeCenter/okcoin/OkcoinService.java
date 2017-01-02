@@ -98,7 +98,7 @@ public class OkcoinService {
         return httpUtil.requestHttpGet(url_prex, this.DEPTH_URL, param);
     }
 
-    public String trades(String symbol, String since) throws HttpException, IOException {
+    public String trades(String symbol, String since) {
         HttpUtilManager httpUtil = HttpUtilManager.getInstance();
         String param = "";
         if (!StringUtil.isEmpty(symbol)) {
@@ -116,7 +116,7 @@ public class OkcoinService {
         return httpUtil.requestHttpGet(url_prex, this.TRADES_URL, param);
     }
 
-    public String userinfo() throws HttpException, IOException {
+    public String userinfo(){
         // 构造参数签名
         Map<String, String> params = new HashMap<String, String>();
         params.put("api_key", api_key);

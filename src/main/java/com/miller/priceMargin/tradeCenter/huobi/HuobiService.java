@@ -98,9 +98,9 @@ public class HuobiService extends Base {
      * @return
      * @throws Exception
      */
-    public String getAccountInfo(String method) {
+    public String getAccountInfo() {
         TreeMap<String, Object> paraMap = new TreeMap<String, Object>();
-        paraMap.put("method", method);
+        paraMap.put("method", "get_account_info");
         paraMap.put("created", getTimestamp());
         paraMap.put("access_key", HUOBI_ACCESS_KEY);
         paraMap.put("secret_key", HUOBI_SECRET_KEY);
@@ -258,7 +258,7 @@ public class HuobiService extends Base {
     }
 
     private String hbTickerUrl = "http://api.huobi.com/staticmarket/ticker_btc_json.js";
-    private int depthSize = 2;
+    private int depthSize = 3;
     private String depthUrl = "http://api.huobi.com/staticmarket/depth_btc_" + depthSize + ".js";
     private String okDepthUrl = "https://www.okcoin.cn/api/v1/depth.do?symbol=btc_cny&size=" + depthSize;
 

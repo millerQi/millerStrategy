@@ -7,6 +7,8 @@ import com.miller.priceMargin.model.order.TradeInfo;
 import com.miller.priceMargin.util.StringUtil;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+
 /**
  * Created by Miller on 2017/1/1.
  */
@@ -52,6 +54,18 @@ public class APIResultHandle {
             orderInfo.setTradeDirection(direction);
             orderInfo.setResult("true");
             return orderInfo;
+        }
+        return null;
+    }
+
+    public BigDecimal getNetAsset(String ret, String center) {
+        if (StringUtil.isEmpty(ret) || StringUtil.isEmpty(center))
+            return null;
+        JSONObject object = JSON.parseObject(ret);
+        if (center.equals("huobi"))
+            return object.getBigDecimal("net_asset");
+        else if (center.equals("okcoin")) {
+            return object.getJSONObject("info").getJSONObject("funds").getJSONObject("asset").getBigDecimal("net");
         }
         return null;
     }

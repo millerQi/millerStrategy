@@ -9,10 +9,10 @@ import java.math.BigDecimal;
 public class InitializationData {//初始化数据相关
     private BigDecimal gains;//总盈利
     private int hasCoin;//持币方 -1 为huobi持币，1为okcoin持币 不用boolean考虑到以后可能多家交易所套利
-    private BigDecimal okFreePrice;//程序初始时Ok可用金额
-    private BigDecimal okLastPrice;
-    private BigDecimal hbFreePrice;//程序初始时hb可用金额
-    private BigDecimal hbLastPrice;
+    private BigDecimal okFreePrice;//程序初始时Ok净资产
+    private BigDecimal okLastPrice;//最新净资产
+    private BigDecimal hbFreePrice;//程序初始时hb净资产
+    private BigDecimal hbLastPrice;//最新净资产
 
     public BigDecimal getGains() {
         return gains;

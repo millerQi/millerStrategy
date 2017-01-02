@@ -47,9 +47,89 @@ public class PriceMarginService {
         return getIdAndExecute(getConnection(), sql.toString());
     }
 
+    public Integer updateHasCoin(int hasCoin) {
+        String sql = "update initialization_data set has_coin = " + hasCoin;
+        return executeUpdate(getConnection(), sql);
+    }
+
+    public Integer addGains(BigDecimal gain) {
+        String sql = "update initialization_data set gains = gains+" + gain;
+        return executeUpdate(getConnection(), sql);
+    }
+
+    public Integer updateNetAssets(BigDecimal okcoinPrice, BigDecimal hbPrice) {
+        String sql = "update initialization_data set ok_free_price = " + okcoinPrice + ",set hb_free_price = " + hbPrice;
+        return executeUpdate(getConnection(), sql);
+    }
+
+    public Integer getHasCoin() {
+        String sql = "select has_coin from initialization_data";
+        String ret = getFirRow(getConnection(), sql);
+        if (ret == null)
+            throw new RuntimeException("get has_coin error!!!");
+        return Integer.valueOf(ret);
+    }
+
+    public BigDecimal getGains() {
+        String sql = "select gains from initialization_data";
+        String ret = getFirRow(getConnection(), sql);
+        if (ret == null)
+            throw new RuntimeException("get has_coin error!!!");
+        return BigDecimal.valueOf(Double.valueOf(ret));
+    }
+
+    private String getFirRow(Connection conn, String sql) {
+        if (conn == null) {
+            log.error("get connection error!");
+            return null;
+        }
+        Statement statement = null;
+        try {
+            statement = conn.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+            resultSet.next();
+            return resultSet.getString("has_coin");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } finally {
+            try {
+                if (statement != null)
+                    statement.close();
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    private Integer executeUpdate(Connection conn, String sql) {
+        if (conn == null) {
+            log.error("get connection error!");
+            return null;
+        }
+        Statement statement = null;
+        int ret = 0;
+        try {
+            statement = conn.createStatement();
+            ret = statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (statement != null)
+                    statement.close();
+                conn.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return ret;
+    }
+
 
     private Long getIdAndExecute(Connection conn, String sql) {
-        if (conn == null){
+        if (conn == null) {
             log.error("get connection error!");
             return null;
         }
@@ -65,7 +145,7 @@ public class PriceMarginService {
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException("order save failed ! SQLException");
-        }finally{
+        } finally {
             try {
                 if (statement != null)
                     statement.close();
@@ -78,12 +158,20 @@ public class PriceMarginService {
     }
 
     public Long saveOrderGain(OrderGain orderGain) {
-        StringBuilder sql = new StringBuilder("insert into `order_gain` (sell_order_id,buy_order_id,gains,ok_free_price,hb_free_price) values(")
+        StringBuilder sql = new StringBuilder("insert into `order_gain` (sell_order_id,buy_order_id,gains) values(")
                 .append("'").append(orderGain.getSellOrderId() == null ? -1L : orderGain.getSellOrderId()).append("',")
                 .append("'").append(orderGain.getBuyOrderId() == null ? -1L : orderGain.getBuyOrderId()).append("',")
-                .append("'").append(orderGain.getGains() == null ? BigDecimal.ZERO : orderGain.getGains()).append("',")
-                .append("'").append(orderGain.getOkFreePrice() == null ? BigDecimal.ZERO : orderGain.getOkFreePrice()).append("',")
-                .append("'").append(orderGain.getHbFreePrice() == null ? BigDecimal.ZERO : orderGain.getHbFreePrice()).append("')");
+                .append("'").append(orderGain.getGains() == null ? BigDecimal.ZERO : orderGain.getGains()).append("')");
         return getIdAndExecute(getConnection(), sql.toString());
+    }
+
+    public void updateFreePrice(BigDecimal okNetAsset, BigDecimal hbNetAsset) {
+        String sql = "update initialization set ok_free_price = " + okNetAsset + ",set hb_free_price = " + hbNetAsset;
+        executeUpdate(getConnection(), sql);
+    }
+
+    public void updateLastPrice(BigDecimal okNetAsset, BigDecimal hbNetAsset) {
+        String sql = "update initialization set ok_last_price = " + okNetAsset + ",set hb_last_price = " + hbNetAsset;
+        executeUpdate(getConnection(), sql);
     }
 }

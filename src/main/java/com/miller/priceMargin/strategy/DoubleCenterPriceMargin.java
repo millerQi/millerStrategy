@@ -1,5 +1,6 @@
 package com.miller.priceMargin.strategy;
 
+import com.miller.priceMargin.Access;
 import com.miller.priceMargin.model.Order;
 import com.miller.priceMargin.model.OrderGain;
 import com.miller.priceMargin.model.order.OrderInfo;
@@ -35,26 +36,22 @@ public class DoubleCenterPriceMargin {
     @Autowired
     private PriceMarginService priceMarginService;
 
-    public static BigDecimal priceMargin = BigDecimal.valueOf(0.5);//程序启动时赋值
+    public static BigDecimal priceMargin = BigDecimal.valueOf(0.8);//程序启动时赋值
 
     public static BigDecimal tradeAmount = BigDecimal.valueOf(0.1);//程序启动后检测完账号持币情况后赋值
 
-    public static String hasCoin = "-1";//启动时检查账户并赋值,1为okcoin持币 0 为都不持币 -1为火币网持币 交易后更改值
-
     private static Log log = LogFactory.getLog(DoubleCenterPriceMargin.class);
 
-    private static String a = "1";
+    private static Integer a = 1;
 
-    private static String b = "-1";
-
-    private static ExecutorService cachedThreadPool = Executors.newFixedThreadPool(5);
+    private static Integer b = -1;
 
     private static BigDecimal gains = BigDecimal.ZERO;//总盈利
 
     /**
      * 搬砖套利
      */
-    private void trade(BigDecimal okPrice, BigDecimal hbPrice) {
+    private void trade(BigDecimal okPrice, BigDecimal hbPrice, Integer hasCoin) {
         String amount = String.valueOf(tradeAmount);
         long okTID = 0, hbTID = 0;
         String hbP, okP;
@@ -73,7 +70,7 @@ public class DoubleCenterPriceMargin {
                 log.error("程序异常!OKCOIN接口下单失败,方向sell,单价" + okP + ",订单数量" + amount);
                 System.exit(0);
             }
-            hasCoin = b;
+            priceMarginService.updateHasCoin(b);
             okTID = trade.getOrderId();
             log.info("okcoin trade sell success");
         }
@@ -92,13 +89,14 @@ public class DoubleCenterPriceMargin {
                 System.exit(0);
             }
             log.info("okcoin trade buy success");
-            hasCoin = a;
+            priceMarginService.updateHasCoin(a);
             okTID = trade.getOrderId();
         }
-        reckonGains(okTID, hbTID, okPrice, hbPrice);
+        reckonGains(okTID, hbTID, okPrice, hbPrice, hasCoin);
     }
 
     public void checkDepthAndStartTrade() {
+        Integer hasCoin = priceMarginService.getHasCoin();
         Map<String, BigDecimal[]> huobiDepth = huobiApi.depth();//获取深度
         if (huobiDepth == null) {
             log.error("深度获取失败");
@@ -124,28 +122,28 @@ public class DoubleCenterPriceMargin {
         if (hasCoin.equals(a)) {//ok持币
             if ((okBidPrice.subtract(hbAskPrice)).compareTo(priceMargin) >= 0) {//ok的买方价格减去火币卖方价格大于等于价差则可以开单
                 if (okBidAmount.compareTo(tradeAmount) >= 0 && hbAskAmount.compareTo(tradeAmount) >= 0) {//判断数量
-                    trade(okBidPrice, hbAskPrice);
+                    trade(okBidPrice, hbAskPrice, hasCoin);
                 } else {
                     log.info("深度价格足够，币数量不足,ok买方持币数量：" + okBidAmount + "，huobi卖方持币数量:" + hbAskAmount);
                 }
             } else {
                 long now = System.currentTimeMillis();
                 if (now - pong >= pongTime) {
-                    log.warn("okcoin has coin pong!");
+                    log.warn("okcoin has coin pong!okcoin depth price " + okBidPrice + ",huobi depth price " + hbAskPrice);
                     pong = now;
                 }
             }
         } else {//火币持币
             if ((hbBidPrice.subtract(okAskPrice)).compareTo(priceMargin) >= 0) {//火币的买方价格减去ok卖方价格大于等于差价则可以开单
                 if (hbBidAmount.compareTo(tradeAmount) >= 0 && okAskAmount.compareTo(tradeAmount) >= 0) {//判断数量
-                    trade(okAskPrice, hbBidPrice);
+                    trade(okAskPrice, hbBidPrice, hasCoin);
                 } else {
                     log.info("深度价格足够，币数量不足,hb买方持币数量：" + okBidAmount + "，ok卖方持币数量:" + hbAskAmount);
                 }
             } else {
                 long now = System.currentTimeMillis();
                 if (now - pong >= pongTime) {
-                    log.warn("okcoin has coin pong!");
+                    log.warn("huobi has coin pong!");
                     pong = now;
                 }
             }
@@ -155,93 +153,83 @@ public class DoubleCenterPriceMargin {
     private long pong = System.currentTimeMillis();//心跳
     private long pongTime = 300000;
 
-    private void reckonGains(long okTID, long hbTID, BigDecimal okPrice, BigDecimal hbPrice) {
-        cachedThreadPool.execute(new ReckonGains(okTID, hbTID, okPrice, hbPrice));
+    private void reckonGains(long okTID, long hbTID, BigDecimal okPrice, BigDecimal hbPrice, Integer hasCoin) {
+        int count = 0;
+        count++;
+        sleep(300);
+
+        String ret = huobiApi.getOrderInfo(1, hbTID, "order_info");
+        OrderInfo hbOrderInfo = resultHandle.getOrderInfo(ret, "huobi");
+        OrderInfo okOrderInfo = resultHandle.getOrderInfo(okcoinService.order_info("btc_cny", okTID), "okcoin");
+        updateLastPrice();//修改最新净资产
+        /**订单可能未成交，或者数据没同步 递归调用**/
+        BigDecimal hbDeal = hbOrderInfo.getDealAmount();
+        BigDecimal okDeal = okOrderInfo.getDealAmount();
+        if (hbDeal.compareTo(BigDecimal.ZERO) == 0
+                || okDeal.compareTo(BigDecimal.ZERO) == 0
+                || hbDeal.compareTo(hbOrderInfo.getAmount()) == -1
+                || okDeal.compareTo(okOrderInfo.getAmount()) == -1) {
+            if (count > 20) {
+                log.error("订单详情调用失败或没有完全成交，数据库订单少记录一笔！hbTid = " + hbTID + ",okTid = " + okTID);
+                return;
+            } else
+                reckonGains(okTID, hbTID, okPrice, hbPrice, hasCoin);
+        }
+        BigDecimal okAvgPrice = okOrderInfo.getAvgPrice();
+        BigDecimal hbAvgPrice = hbOrderInfo.getAvgPrice();
+        BigDecimal expectGains, realGains;
+        if (hasCoin.equals(a)) {
+            expectGains = tradeAmount.multiply(okPrice.subtract(hbPrice));
+            realGains = tradeAmount.multiply(okAvgPrice.subtract(hbAvgPrice));
+        } else {
+            expectGains = tradeAmount.multiply(hbPrice.subtract(okPrice));
+            realGains = tradeAmount.multiply(hbAvgPrice.subtract(okAvgPrice));
+        }
+        Long hbId = saveOrder(hbOrderInfo, "huobi", hbPrice);
+        Long okId = saveOrder(okOrderInfo, "okcoin", okPrice);
+
+
+        saveOrderGain(hbId, okId, realGains, hasCoin);
+        log.warn("搬砖完成--起始价格--okcoin:" + okPrice + ",huobi:" + hbPrice + "--实际成交价--okcoin:" + okAvgPrice + ",huobi:" + hbAvgPrice);
+        BigDecimal huadian = expectGains.subtract(realGains);
+        if (huadian.compareTo(BigDecimal.ZERO) == -1)
+            huadian = huadian.subtract(huadian.multiply(BigDecimal.valueOf(2)));
+        log.warn("==========预计盈利:" + expectGains + " , 实际盈利:" + realGains + " ，滑点" + huadian + "==========");
+        priceMarginService.addGains(realGains);
     }
 
-    private class ReckonGains implements Runnable {
-        private long okTID;
-        private long hbTID;
-        private BigDecimal okPrice;
-        private BigDecimal hbPrice;
-        private int count = 0;
+    private void updateLastPrice() {
+        BigDecimal okNetAsset = resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin");
+        BigDecimal hbNetAsset = resultHandle.getNetAsset(huobiApi.getAccountInfo(), "huobi");
+        priceMarginService.updateLastPrice(okNetAsset, hbNetAsset);
+    }
 
-        ReckonGains(long okTID, long hbTID, BigDecimal okPrice, BigDecimal hbPrice) {
-            this.okTID = okTID;
-            this.hbTID = hbTID;
-            this.okPrice = okPrice;
-            this.hbPrice = hbPrice;
+    private void saveOrderGain(Long hbId, Long okId, BigDecimal realGains, Integer hasCoin) {
+        OrderGain orderGain = new OrderGain();
+        Long buyId, sellId;
+        if (hasCoin.equals(a)) {//okcoin为卖
+            sellId = okId;
+            buyId = hbId;
+        } else {
+            sellId = hbId;
+            buyId = okId;
         }
+        orderGain.setSellOrderId(sellId);
+        orderGain.setBuyOrderId(buyId);
+        orderGain.setGains(realGains);
+        priceMarginService.saveOrderGain(orderGain);
+    }
 
-        public void run() {
-            count++;
-            sleep(300);
-
-            String ret = huobiApi.getOrderInfo(1, hbTID, "order_info");
-            OrderInfo hbOrderInfo = resultHandle.getOrderInfo(ret, "huobi");
-            OrderInfo okOrderInfo = resultHandle.getOrderInfo(okcoinService.order_info("btc_cny", okTID), "okcoin");
-            /**订单可能未成交，或者数据没同步 递归调用**/
-            BigDecimal hbDeal = hbOrderInfo.getDealAmount();
-            BigDecimal okDeal = okOrderInfo.getDealAmount();
-            if (hbDeal.compareTo(BigDecimal.ZERO) == 0
-                    || okDeal.compareTo(BigDecimal.ZERO) == 0
-                    || hbDeal.compareTo(hbOrderInfo.getAmount()) == -1
-                    || okDeal.compareTo(okOrderInfo.getAmount()) == -1) {
-                if (count > 20) {
-                    log.error("订单详情调用失败或没有完全成交，数据库订单少记录一笔！hbTid = " + hbTID + ",okTid = " + okTID);
-                    return;
-                } else
-                    run();
-            }
-            BigDecimal okAvgPrice = okOrderInfo.getAvgPrice();
-            BigDecimal hbAvgPrice = hbOrderInfo.getAvgPrice();
-            BigDecimal expectGains, realGains;
-            if (hasCoin.equals(a)) {
-                expectGains = tradeAmount.multiply(okPrice.subtract(hbPrice));
-                realGains = tradeAmount.multiply(okAvgPrice.subtract(hbAvgPrice));
-            } else {
-                expectGains = tradeAmount.multiply(hbPrice.subtract(okPrice));
-                realGains = tradeAmount.multiply(hbAvgPrice.subtract(okAvgPrice));
-            }
-            Long hbId = saveOrder(hbOrderInfo, "huobi", hbPrice);
-            Long okId = saveOrder(okOrderInfo, "okcoin", okPrice);
-            saveOrderGain(hbId, okId, realGains);
-            log.warn("搬砖完成--起始价格--okcoin:" + okPrice + ",huobi:" + hbPrice + "--实际成交价--okcoin:" + okAvgPrice + ",huobi:" + hbAvgPrice);
-            BigDecimal huadian = expectGains.subtract(realGains);
-            if (huadian.compareTo(BigDecimal.ZERO) == -1)
-                huadian = huadian.subtract(huadian.multiply(BigDecimal.valueOf(2)));
-            log.warn("==========预计盈利:" + expectGains + " , 实际盈利:" + realGains + " ，滑点" + huadian + "==========");
-            gains = gains.add(realGains);
-            log.warn("==================================总盈利:" + gains + "====================================");
-        }
-
-        private void saveOrderGain(Long hbId, Long okId, BigDecimal realGains) {
-            OrderGain orderGain = new OrderGain();
-            Long buyId, sellId;
-            if (hasCoin.equals(a)) {//okcoin为卖
-                sellId = okId;
-                buyId = hbId;
-            } else {
-                sellId = hbId;
-                buyId = okId;
-            }
-            orderGain.setSellOrderId(sellId);
-            orderGain.setBuyOrderId(buyId);
-            orderGain.setGains(realGains);
-            priceMarginService.saveOrderGain(orderGain);
-        }
-
-        private Long saveOrder(OrderInfo orderInfo, String center, BigDecimal price) {
-            Order order = new Order();
-            order.setTickerPrice(price);
-            order.setAmount(orderInfo.getAmount());
-            order.setTradeDirection(orderInfo.getTradeDirection());
-            order.setTradeCenter(center);
-            order.setDealAmount(orderInfo.getDealAmount());
-            order.setDealPrice(orderInfo.getAvgPrice());
-            order.setCreateTime(new Timestamp(new Date().getTime()));
-            return priceMarginService.saveOrder(order);
-        }
+    private Long saveOrder(OrderInfo orderInfo, String center, BigDecimal price) {
+        Order order = new Order();
+        order.setTickerPrice(price);
+        order.setAmount(orderInfo.getAmount());
+        order.setTradeDirection(orderInfo.getTradeDirection());
+        order.setTradeCenter(center);
+        order.setDealAmount(orderInfo.getDealAmount());
+        order.setDealPrice(orderInfo.getAvgPrice());
+        order.setCreateTime(new Timestamp(new Date().getTime()));
+        return priceMarginService.saveOrder(order);
     }
 
     private String getMuchSmallPrice(BigDecimal price) {
@@ -253,7 +241,10 @@ public class DoubleCenterPriceMargin {
     }
 
     public void initData() {//修改初始数据
-
+        BigDecimal okNetAsset = resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin");
+        BigDecimal hbNetAsset = resultHandle.getNetAsset(huobiApi.getAccountInfo(), "huobi");
+        priceMarginService.updateFreePrice(okNetAsset, hbNetAsset);
+        priceMarginService.updateLastPrice(okNetAsset, hbNetAsset);
     }
 
     private static void sleep(long mills) {

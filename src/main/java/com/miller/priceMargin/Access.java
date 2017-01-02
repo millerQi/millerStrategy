@@ -16,6 +16,7 @@ public class Access {
         loadProperties();
         ApplicationContext context = new ClassPathXmlApplicationContext("classpath:spring/Application-context.xml");
         DoubleCenterPriceMargin doubleCenter = context.getBean(DoubleCenterPriceMargin.class);
+        doubleCenter.initData();//初始化资产
         while (true) {
             doubleCenter.checkDepthAndStartTrade();
             Thread.sleep(1500);
