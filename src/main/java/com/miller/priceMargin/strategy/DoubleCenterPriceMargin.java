@@ -33,7 +33,7 @@ public class DoubleCenterPriceMargin {
     @Autowired
     private PriceMarginService priceMarginService;
 
-    public static BigDecimal priceMargin = BigDecimal.valueOf(0.8);//程序启动时赋值
+    public static BigDecimal priceMargin = BigDecimal.valueOf(1);//程序启动时赋值
 
     public static BigDecimal tradeAmount = BigDecimal.valueOf(0.1);//程序启动后检测完账号持币情况后赋值
 
