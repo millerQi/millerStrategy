@@ -23,6 +23,8 @@ public class DepthDataSource {
 
     private Log log = LogFactory.getLog(DepthDataSource.class);
 
+    private long lastWarnTime = System.currentTimeMillis();
+
     /**
      * 深度数据源
      * <p>
@@ -45,7 +47,7 @@ public class DepthDataSource {
      * 说明:如果行情不足以套利或者持币数量无法套利，才会考虑迁移
      * （迁移是因为有些交易所大多时间持续比另一个交易所价格高，偶尔价格持平）
      */
-    private Map<String, Object> getTradeCenterDepth() {
+    Map<String, Object> getTradeCenterDepth() {
         Map<String, Object> map = new HashMap<>();
         map.put("canReverseAmount", false);
         map.put("canOrder", false);
@@ -90,6 +92,11 @@ public class DepthDataSource {
         /**ok sell - 火币 buy 》= 盈利价差**/
         else if (okSellPM.compareTo(AllocationSource.price_margin) >= 0)
             packageGainsPriceMargin(map, TradeCenter.okcoin.name(), TradeCenter.huobi.name(), okSellPM, okBidPrice, hbAskPrice, okBidAmount, hbAskAmount);
+        long timeNow;
+        if ((timeNow = System.currentTimeMillis()) - lastWarnTime > 300000) {//5分钟心跳一次
+            log.info("pong!");
+            lastWarnTime = timeNow;
+        }
         return map;
     }
 
@@ -121,9 +128,9 @@ public class DepthDataSource {
     }
 
     /*查看库中是否需要迁移*/
-    public String isReverse() {
-        boolean isReverse = false;//// TODO: 17-1-4 从库中查询是否需要迁移头寸
-        String center = "";//并获取迁移至哪个交易所
-        return null;
+    private String isReverse() {
+        boolean isReverse = AllocationSource.isReverse;//是否需要迁移头寸
+        String center = AllocationSource.reverseCenter;//并获取迁移至哪个交易所
+        return isReverse ? center : null;
     }
 }

@@ -16,10 +16,18 @@ public class CommonUtil {
     }
 
     public static String getMuchSmallPrice(BigDecimal price) {
-        return String.valueOf(price.multiply(BigDecimal.valueOf(0.95)).setScale(2, BigDecimal.ROUND_DOWN));
+        return String.valueOf(price.multiply(BigDecimal.valueOf(0.98)).setScale(2, BigDecimal.ROUND_DOWN));
     }
 
     public static String getMuchBigPrice(BigDecimal price) {
-        return String.valueOf(price.multiply(BigDecimal.valueOf(1.05)).setScale(2, BigDecimal.ROUND_DOWN));
+        return String.valueOf(price.multiply(BigDecimal.valueOf(1.02)).setScale(2, BigDecimal.ROUND_DOWN));
+    }
+
+    public static BigDecimal getDecimalMuchSmallPrice(BigDecimal price) {
+        return price.multiply(BigDecimal.valueOf(0.98)).setScale(2, BigDecimal.ROUND_DOWN);
+    }
+
+    public static BigDecimal getDecimalMuchBigPrice(BigDecimal price) {
+        return price.multiply(BigDecimal.valueOf(1.02)).setScale(2, BigDecimal.ROUND_DOWN);
     }
 }

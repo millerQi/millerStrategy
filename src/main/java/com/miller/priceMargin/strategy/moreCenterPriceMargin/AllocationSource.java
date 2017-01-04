@@ -26,4 +26,8 @@ class AllocationSource {
     static BigDecimal hbFreePrice;
 
     static BigDecimal hbFreeAmount;
+
+
+    public static boolean isReverse;
+    public static String reverseCenter;
 }
