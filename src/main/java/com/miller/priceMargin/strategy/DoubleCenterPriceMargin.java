@@ -8,6 +8,7 @@ import com.miller.priceMargin.service.APIResultHandle;
 import com.miller.priceMargin.service.PriceMarginService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
+import com.miller.priceMargin.util.CommonUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 /**
  * Created by Miller on 2017/1/1.
+ * 无脑搬砖，适用于价差小，周期短的差价交易所
  */
 @Component
 public class DoubleCenterPriceMargin {
@@ -53,7 +55,7 @@ public class DoubleCenterPriceMargin {
         String hbP, okP;
         /**------okcoin卖 huobi买-------*/
         if (hasCoin.equals(a)) {//1-okcoin持币
-            String result = huobiApi.buy(1, hbP = getMuchBigPrice(hbPrice), amount, null, "buy");//huobi通过rest接口下单
+            String result = huobiApi.buy(1, hbP = CommonUtil.getMuchBigPrice(hbPrice), amount, null, "buy");//huobi通过rest接口下单
             TradeInfo huobiTrade = resultHandle.getTradeInfo(result, "huobi");
             if (huobiTrade.getResult().equals("false")) {
                 log.error("程序异常!火币接口下单失败,方向buy,单价" + hbP + ",订单数量" + amount);
@@ -61,7 +63,7 @@ public class DoubleCenterPriceMargin {
             }
             hbTID = huobiTrade.getOrderId();
             log.info("huobi trade buy success");
-            TradeInfo trade = resultHandle.getTradeInfo(okcoinService.trade("btc_cny", "sell", okP = getMuchSmallPrice(okPrice), amount), "okcoin");//okcoin通过rest下单
+            TradeInfo trade = resultHandle.getTradeInfo(okcoinService.trade("btc_cny", "sell", okP = CommonUtil.getMuchSmallPrice(okPrice), amount), "okcoin");//okcoin通过rest下单
             if (trade == null) {
                 log.error("程序异常!OKCOIN接口下单失败,方向sell,单价" + okP + ",订单数量" + amount);
                 System.exit(0);
@@ -72,14 +74,14 @@ public class DoubleCenterPriceMargin {
         }
         /**------okcoin买 huobi卖-------*/
         else if (hasCoin.equals(b)) {//-1huobi持币
-            TradeInfo huobiTrade = resultHandle.getTradeInfo(huobiApi.sell(1, hbP = getMuchSmallPrice(hbPrice), amount, null, "sell"), "huobi");
+            TradeInfo huobiTrade = resultHandle.getTradeInfo(huobiApi.sell(1, hbP = CommonUtil.getMuchSmallPrice(hbPrice), amount, null, "sell"), "huobi");
             if (huobiTrade.getResult().equals("false")) {
                 log.error("程序异常!火币接口下单失败,方向sell,单价" + hbP + ",订单数量" + amount);
                 System.exit(0);
             }
             log.info("huobi trade sell success");
             hbTID = huobiTrade.getOrderId();
-            TradeInfo trade = resultHandle.getTradeInfo(okcoinService.trade("btc_cny", "buy", okP = getMuchBigPrice(okPrice), amount), "okcoin");
+            TradeInfo trade = resultHandle.getTradeInfo(okcoinService.trade("btc_cny", "buy", okP = CommonUtil.getMuchBigPrice(okPrice), amount), "okcoin");
             if (trade == null) {
                 log.error("程序异常!OKCOIN接口下单失败,方向buy,单价" + okP + ",订单数量" + amount);
                 System.exit(0);
@@ -155,7 +157,7 @@ public class DoubleCenterPriceMargin {
         OrderInfo hbOrderInfo = null;
         OrderInfo okOrderInfo = null;
         while (flag) {
-            sleep(300);
+            CommonUtil.sleep(300);
             count++;
             hbOrderInfo = resultHandle.getOrderInfo(huobiApi.getOrderInfo(1, hbTID, "order_info"), "huobi");
             okOrderInfo = resultHandle.getOrderInfo(okcoinService.order_info("btc_cny", okTID), "okcoin");
@@ -231,27 +233,11 @@ public class DoubleCenterPriceMargin {
         return priceMarginService.saveOrder(order);
     }
 
-    private String getMuchSmallPrice(BigDecimal price) {
-        return String.valueOf(price.multiply(BigDecimal.valueOf(0.95)).setScale(2, BigDecimal.ROUND_DOWN));
-    }
-
-    private String getMuchBigPrice(BigDecimal price) {
-        return String.valueOf(price.multiply(BigDecimal.valueOf(1.05)).setScale(2, BigDecimal.ROUND_DOWN));
-    }
-
     public void initData() {//修改初始数据
         BigDecimal okNetAsset = resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin");
         BigDecimal hbNetAsset = resultHandle.getNetAsset(huobiApi.getAccountInfo(), "huobi");
         priceMarginService.updateFreePrice(okNetAsset, hbNetAsset);
         priceMarginService.updateLastPrice(okNetAsset, hbNetAsset);
-    }
-
-    private static void sleep(long mills) {
-        try {
-            Thread.sleep(mills);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
 }
