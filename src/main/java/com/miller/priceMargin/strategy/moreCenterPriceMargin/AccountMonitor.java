@@ -44,6 +44,14 @@ public class AccountMonitor {
         }
         UserInfo okcoinUserInfo = apiResultHandle.getUserInfo(okcoinService.userinfo(), TradeCenter.okcoin.name());
         UserInfo huobiUserInfo = apiResultHandle.getUserInfo(huobiService.getAccountInfo(), TradeCenter.huobi.name());
+        if (okcoinUserInfo == null) {
+            log.error("account_monitor okcoin get user_info error");
+            return;
+        }
+        if (huobiUserInfo == null) {
+            log.error("account_monitor huobi get user_info error");
+            return;
+        }
 
         BigDecimal okFreeLtc = okcoinUserInfo.getFreeLTC();
         BigDecimal okFreeBtc = okcoinUserInfo.getFreeBTC();
