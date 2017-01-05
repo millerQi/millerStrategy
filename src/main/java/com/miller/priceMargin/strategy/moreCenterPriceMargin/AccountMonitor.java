@@ -32,10 +32,16 @@ public class AccountMonitor {
     private BigDecimal stopPercent = BigDecimal.valueOf(0.4);
 
     //任意一边小于总和的10%就开始迁移
-    private BigDecimal startPercent = BigDecimal.valueOf(0, 1);
+    private BigDecimal startPercent = BigDecimal.valueOf(0.2);
+
+    private int count = 0;
 
     @Scheduled(fixedRate = 60000)//一分钟执行一次
     public void startAccountMonitor() {
+        if (count == 0) {
+            log.info("start account monitor!");
+            count++;
+        }
         UserInfo okcoinUserInfo = apiResultHandle.getUserInfo(okcoinService.userinfo(), TradeCenter.okcoin.name());
         UserInfo huobiUserInfo = apiResultHandle.getUserInfo(huobiService.getAccountInfo(), TradeCenter.huobi.name());
 
@@ -89,5 +95,9 @@ public class AccountMonitor {
                 log.warn("start reverse , the reverse_center is " + TradeCenter.okcoin.name());
             }
         }
+    }
+
+    public static void main(String[] args) {
+
     }
 }

@@ -57,7 +57,7 @@ public class URLUtil {
         return result;
     }
 
-    public static String doPost(String url, Map<String, String> params) {
+    public static String doPost(String url, Map<String, Object> params) {
         PrintWriter out = null;
         BufferedReader in = null;
         String result = "";

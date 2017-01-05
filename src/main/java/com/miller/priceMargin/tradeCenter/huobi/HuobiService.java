@@ -3,7 +3,11 @@ package com.miller.priceMargin.tradeCenter.huobi;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.miller.priceMargin.strategy.moreCenterPriceMargin.AllocationSource;
+import com.miller.priceMargin.util.StringUtil;
 import com.miller.priceMargin.util.URLUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -259,9 +263,8 @@ public class HuobiService extends Base {
     }
 
     private String hbTickerUrl = "http://api.huobi.com/staticmarket/ticker_btc_json.js";
-    private int depthSize = 2;
-    private String depthUrl = "http://api.huobi.com/staticmarket/depth_btc_" + depthSize + ".js";
-    private String okDepthUrl = "https://www.okcoin.cn/api/v1/depth.do?symbol=btc_cny&size=" + depthSize;
+    private String depthUrl = "http://api.huobi.com/staticmarket/depth_" + AllocationSource.getCoinType() + "_" + AllocationSource.depthSize + ".js";
+    private String okDepthUrl = "https://www.okcoin.cn/api/v1/depth.do?symbol=" + AllocationSource.getCoinType() + "_cny&size=" + AllocationSource.depthSize;
 
     public BigDecimal ticker() {
         String ret = URLUtil.doGet(hbTickerUrl, null);
@@ -276,12 +279,19 @@ public class HuobiService extends Base {
      *
      * @return
      */
+    private Log log = LogFactory.getLog(HuobiService.class);
+
     public Map<String, BigDecimal[]> depth() {
         Map<String, BigDecimal[]> map = new HashMap<>();
         String ret = URLUtil.doGet(depthUrl, null);
         String okRet = URLUtil.doGet(okDepthUrl, null);
-        if (ret == null)
+        if (StringUtil.isEmpty(ret)) {
+            log.error("huobi 's depth get error!");
             return null;
+        } else if (StringUtil.isEmpty(ret)) {
+            log.error("okcoin 's depth get error!");
+            return null;
+        }
         JSONObject object = JSON.parseObject(ret);
         JSONArray asks = object.getJSONArray("asks");
         JSONArray bids = object.getJSONArray("bids");
@@ -319,15 +329,15 @@ public class HuobiService extends Base {
         }
         BigDecimal[] hbAsk = new BigDecimal[2];
         BigDecimal[] hbBid = new BigDecimal[2];
-        hbAsk[0] = asksAvgPrice.divide(BigDecimal.valueOf(depthSize), 2);//深度均价
+        hbAsk[0] = asksAvgPrice.divide(BigDecimal.valueOf(AllocationSource.depthSize), 2);//深度均价
         hbAsk[1] = asksAmount;
-        hbBid[0] = bidsAvgPrice.divide(BigDecimal.valueOf(depthSize), 2);
+        hbBid[0] = bidsAvgPrice.divide(BigDecimal.valueOf(AllocationSource.depthSize), 2);
         hbBid[1] = bidsAmount;
         BigDecimal[] okAsk = new BigDecimal[2];
         BigDecimal[] okBid = new BigDecimal[2];
-        okAsk[0] = asksAvgPriceO.divide(BigDecimal.valueOf(depthSize), 2);//深度均价
+        okAsk[0] = asksAvgPriceO.divide(BigDecimal.valueOf(AllocationSource.depthSize), 2);//深度均价
         okAsk[1] = asksAmountO;
-        okBid[0] = bidsAvgPriceO.divide(BigDecimal.valueOf(depthSize), 2);
+        okBid[0] = bidsAvgPriceO.divide(BigDecimal.valueOf(AllocationSource.depthSize), 2);
         okBid[1] = bidsAmountO;
         map.put("hbAsks", hbAsk);
         map.put("hbBids", hbBid);
@@ -345,7 +355,4 @@ public class HuobiService extends Base {
         System.out.println("okBids:" + Arrays.toString(map.get("okBids")));
     }
 
-    /**
-     * ps：okcoin free cny -- 74.05 huobi free cny --  995.37  持有一个币
-     */
 }

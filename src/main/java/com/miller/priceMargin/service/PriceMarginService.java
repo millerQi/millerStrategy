@@ -59,7 +59,7 @@ public class PriceMarginService {
 
     public Integer getHasCoin() {
         String sql = "select has_coin from initialization_data";
-        String ret = getFirRow(getConnection(), sql);
+        String ret = getFirRow(getConnection(), sql, "has_coin");
         if (ret == null)
             throw new RuntimeException("get has_coin error!!!");
         return Integer.valueOf(ret);
@@ -67,13 +67,13 @@ public class PriceMarginService {
 
     public BigDecimal getGains() {
         String sql = "select gains from initialization_data";
-        String ret = getFirRow(getConnection(), sql);
+        String ret = getFirRow(getConnection(), sql, "gains");
         if (ret == null)
             throw new RuntimeException("get has_coin error!!!");
         return BigDecimal.valueOf(Double.valueOf(ret));
     }
 
-    private String getFirRow(Connection conn, String sql) {
+    private String getFirRow(Connection conn, String sql, String column) {
         if (conn == null) {
             log.error("get connection error!");
             return null;
@@ -83,7 +83,7 @@ public class PriceMarginService {
             statement = conn.createStatement();
             ResultSet resultSet = statement.executeQuery(sql);
             resultSet.next();
-            return resultSet.getString("has_coin");
+            return resultSet.getString(column);
         } catch (SQLException ex) {
             ex.printStackTrace();
         } finally {

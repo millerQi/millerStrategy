@@ -70,6 +70,14 @@ public class TradeService {
             count++;
             sellOrderInfo = commonTradeService.orderInfo(sellCenter, sellTID, coin);
             buyOrderInfo = commonTradeService.orderInfo(buyCenter, buyTID, coin);
+            if (sellOrderInfo == null || buyOrderInfo == null) {
+                if (count > 20) {
+                    log.error("订单详情调用失败，数据库订单少记录一笔！sellTID = " + sellTID + ",buyTID = " + buyTID);
+                    updateLastPrice();//修改最新净资产 // TODO: 17-1-5需要修改统一
+                    return;
+                }
+                continue;
+            }
             /**订单可能未成交，或者数据没同步 循环调用**/
             BigDecimal sellDeal = sellOrderInfo.getDealAmount();
             BigDecimal buyDeal = buyOrderInfo.getDealAmount();
@@ -91,14 +99,14 @@ public class TradeService {
         BigDecimal dealGains = sellAvgPrice.subtract(buyAvgPrice);
         String head = "";
         if (isReverse)
-            head = "| Reverse order | ";
-
+            head = "| Reverse order ! | ";
+        // TODO: 17-1-5 记录订单
+        priceMarginService.addGains(dealGains);
         String msg = head + "| sell_avg_price | " + sellAvgPrice + " | buy_avg_price | " + buyAvgPrice + " | amount | " + sellOrderInfo.getAmount() + " | gains | " + dealGains + " | all_gains | " + priceMarginService.getGains() + " |";
         if (dealGains.compareTo(BigDecimal.ZERO) >= 0)
             log.info(msg);
         else
             log.error(msg);
-        priceMarginService.addGains(dealGains);
     }
 
     private void updateLastPrice() {

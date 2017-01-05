@@ -1,5 +1,6 @@
 package com.miller.priceMargin.tradeCenter.huobi;
 
+import com.miller.priceMargin.util.URLUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.util.EntityUtils;
@@ -26,19 +27,7 @@ public abstract class Base {
 
 
     public String post(Map<String, Object> map, String url) {
-        try {
-            return HttpUtil.post(url, map, response -> {
-                int code = response.getStatusLine().getStatusCode();
-                if (success == code) {
-                    return EntityUtils.toString(response.getEntity(), "utf-8");
-                }
-                logger.info("response code {}" + code);
-                return null;
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "error post client";
+        return URLUtil.doPost(url, map);
     }
 
     public long getTimestamp() {

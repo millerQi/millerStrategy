@@ -10,16 +10,27 @@ import java.math.BigDecimal;
  * 配置参数
  * 迁移头寸
  */
-class AllocationSource {
+public class AllocationSource {
     static boolean strategyOpen = true;
     /*盈利价差*/
-    static BigDecimal price_margin = BigDecimal.ONE;
+    static BigDecimal price_margin = BigDecimal.valueOf(0.04);
 
     /*迁移头寸，可接受的最大亏损 以一个币种为单位*/
-    static BigDecimal canReversePriceM = BigDecimal.valueOf(0.3);
+    static BigDecimal canReversePriceM = BigDecimal.valueOf(0.01);
 
     //分批挂单量
-    static BigDecimal tickAmount;
+    static BigDecimal tickAmount = BigDecimal.valueOf(1);
+
+    //1 为btc 2 为 ltc
+    static int coin = 2;
+
+    public static int depthSize = 2;
+
+    public static String getCoinType() {
+        if (coin == 1)
+            return "btc";
+        return "ltc";
+    }
 
 
     /*持币情况，程序启动赋值*/
@@ -48,9 +59,6 @@ class AllocationSource {
         AllocationSource.reverseCenter = center;
     }
 
-    //1 为btc 2 为 ltc
-    static int coin = 1;
-
     static synchronized boolean getReverse() {
         return isReverse;
     }
@@ -73,10 +81,16 @@ class AllocationSource {
     static synchronized BigDecimal getFreeAmount(String tradeCenter) {
         if (StringUtil.isEmpty(tradeCenter))
             return BigDecimal.ZERO;
-        if (tradeCenter.equals(TradeCenter.okcoin.name()))
-            return okFreeBTCAmount;
-        else if (tradeCenter.equals(TradeCenter.huobi.name()))
-            return okFreeBTCAmount;
+        if (tradeCenter.equals(TradeCenter.okcoin.name())) {
+            if (coin == 1)
+                return okFreeBTCAmount;
+            else
+                return okFreeLTCAmount;
+        } else if (tradeCenter.equals(TradeCenter.huobi.name()))
+            if (coin == 1)
+                return hbFreeBTCAmount;
+            else
+                return hbFreeLTCAmount;
         else
             return BigDecimal.ZERO;
     }
