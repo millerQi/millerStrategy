@@ -1,5 +1,8 @@
 package com.miller.priceMargin.util;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -13,6 +16,9 @@ import java.util.Set;
  * Created by Miller on 2017/1/1.
  */
 public class URLUtil {
+
+    private static Log log = LogFactory.getLog(URLUtil.class);
+
     public static String doGet(String url, Map<String, String> params) {
         String result = "";
         BufferedReader in = null;
@@ -44,6 +50,7 @@ public class URLUtil {
                 result += line;
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
         }
         // 使用finally块来关闭输入流
         finally {
@@ -94,6 +101,7 @@ public class URLUtil {
                 result += line;
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
         }
         //使用finally块来关闭输出流、输入流
         finally {
