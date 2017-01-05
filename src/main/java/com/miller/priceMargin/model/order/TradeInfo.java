@@ -4,20 +4,22 @@ package com.miller.priceMargin.model.order;
  * Created by Miller on 2017/1/1.
  */
 public class TradeInfo {
-    public TradeInfo(){}
-    public TradeInfo(long orderId, String result) {
+    public TradeInfo() {
+    }
+
+    public TradeInfo(Long orderId, String result) {
         this.orderId = orderId;
         this.result = result;
     }
 
-    private long orderId;
+    private Long orderId;
     private String result;
 
     public long getOrderId() {
         return orderId;
     }
 
-    public void setOrderId(long orderId) {
+    public void setOrderId(Long orderId) {
         this.orderId = orderId;
     }
 

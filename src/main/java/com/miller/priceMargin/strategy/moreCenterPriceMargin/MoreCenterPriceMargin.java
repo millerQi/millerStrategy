@@ -1,6 +1,5 @@
 package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
-import com.miller.priceMargin.enumUtil.TradeCenter;
 import com.miller.priceMargin.util.CommonUtil;
 import com.miller.priceMargin.util.StringUtil;
 import org.apache.commons.logging.Log;
@@ -21,6 +20,9 @@ public class MoreCenterPriceMargin {
     @Autowired
     private DepthDataSource depthDataSource;
 
+    @Autowired
+    private TradeService tradeService;
+
     private Log log = LogFactory.getLog(MoreCenterPriceMargin.class);
 
     /*持续套利*/
@@ -30,10 +32,11 @@ public class MoreCenterPriceMargin {
     /*上次卖方交易所*/
     private String lastSellCenter;
     /*价差上升百分比系数*/
-    private BigDecimal pencent = BigDecimal.valueOf(1.2);
+    private BigDecimal percent = BigDecimal.valueOf(1.2);
 
 
     public void startStrategy() {
+        // TODO: 17-1-5
         while (AllocationSource.strategyOpen) {
             /**获取深度**/
             Map<String, Object> map = depthDataSource.getTradeCenterDepth();
@@ -48,8 +51,23 @@ public class MoreCenterPriceMargin {
         }
     }
 
-    private void reverseAmountMethod(Map<String, Object> map) {
-
+    private boolean reverseAmountMethod(Map<String, Object> map) {
+        String reverseSellCenter = StringUtil.getString(map.get("reverseSellCenter"));
+        String reverseBuyCenter = StringUtil.getString(map.get("reverseBuyCenter"));
+        BigDecimal reverseBuyPrice = CommonUtil.getDecimalMuchBigPrice((BigDecimal) map.get("reverseBuyPrice"));
+        BigDecimal reverseSellPrice = CommonUtil.getDecimalMuchSmallPrice((BigDecimal) map.get("reverseSellPrice"));
+        BigDecimal reverseSellAmount = (BigDecimal) map.get("reverseSellAmount");
+        BigDecimal reverseBuyAmount = (BigDecimal) map.get("reverseBuyAmount");
+        /**check depth amount**/
+        if (AllocationSource.tickAmount.compareTo(reverseBuyAmount) == 1
+                || AllocationSource.tickAmount.compareTo(reverseSellAmount) == 1)
+            return false;
+        /**check freeAmount and freePrice**/
+        if (!validateFree(reverseSellCenter, reverseBuyCenter, reverseBuyPrice))
+            return false;
+        /**trade**/
+        tradeService.trade(reverseSellCenter, reverseBuyCenter, reverseSellPrice, reverseBuyPrice, reverseSellAmount, reverseBuyAmount, AllocationSource.coin, true);
+        return true;
     }
 
     /**
@@ -67,53 +85,46 @@ public class MoreCenterPriceMargin {
         BigDecimal buyPrice = CommonUtil.getDecimalMuchBigPrice((BigDecimal) map.get("buyPrice"));
         BigDecimal sellPrice = CommonUtil.getDecimalMuchSmallPrice((BigDecimal) map.get("sellPrice"));
         /**判断是否持续上次的搬砖**/
-        if (continued && lastSellCenter.equals(sellCenter)) {
-            if (priceMargin.compareTo(lastPriceMargin = lastPriceMargin.multiply(pencent)) == -1)
+        if (continued && !StringUtil.isEmpty(lastSellCenter) && lastSellCenter.equals(sellCenter)) {
+            if (priceMargin.compareTo(lastPriceMargin.multiply(percent)) == -1)
                 return false;
         } else {//初始化
             continued = true;
             lastSellCenter = sellCenter;
             lastPriceMargin = priceMargin;
         }
-
-        if (sellAmount.compareTo(AllocationSource.tickAmount) < 0
-                || buyAmount.compareTo(AllocationSource.tickAmount) < 0) {
-            log.warn("can order but amount is'n enough ! sell_center : " + sellCenter + " tick_amount : "
-                    + AllocationSource.tickAmount + " sell_amount : " + sellAmount + " buy_amount : " + buyAmount);
+        /**check depth amount**/
+        if (AllocationSource.tickAmount.compareTo(buyAmount) == 1
+                || AllocationSource.tickAmount.compareTo(sellAmount) == 1)
             return false;
-        }
 
         /**check freeAmount and freePrice**/
-        if (sellCenter.equals(TradeCenter.okcoin.name())) {
-            /**check okcoin_free_amount**/
-            if (AllocationSource.tickAmount.compareTo(AllocationSource.okFreeAmount) == 1) {
-                log.warn("can order but okcoin's free_amount is'n enough ! tick_amount : "
-                        + AllocationSource.tickAmount + " ok_free_amount = " + AllocationSource.okFreeAmount);
-                return false;
-            }
-            /**check huobi_free_price**/
-            BigDecimal totalPrice;
-            if (AllocationSource.hbFreePrice.compareTo(totalPrice = buyPrice.multiply(AllocationSource.tickAmount)) == -1) {
-                log.warn("can order but huobi's free_price is'n enough !  total_price : "
-                        + totalPrice + " huobi's free_price : " + AllocationSource.hbFreePrice);
-                return false;
-            }
-        } else {//huobi
-            /**check huobi_free_amount**/
-            if (AllocationSource.tickAmount.compareTo(AllocationSource.hbFreeAmount) == 1) {
-                log.warn("can order but huobi's free_amount is'n enough ! tick_amount : "
-                        + AllocationSource.tickAmount + " ok_free_amount = " + AllocationSource.hbFreeAmount);
-                return false;
-            }
-            /**check ok_free_price**/
-            BigDecimal totalPrice;
-            if (AllocationSource.okFreePrice.compareTo(totalPrice = buyPrice.multiply(AllocationSource.tickAmount)) == -1) {
-                log.warn("can order but okcoin's free_price is'n enough !  total_price : "
-                        + totalPrice + " okcoin's free_price : " + AllocationSource.hbFreePrice);
-                return false;
-            }
+        if (!validateFree(sellCenter, buyCenter, buyPrice))
+            return false;
+
+        /**trade**/
+        boolean tradeSuccess = tradeService.trade(sellCenter, buyCenter, sellPrice, buyPrice, AllocationSource.tickAmount, AllocationSource.tickAmount, AllocationSource.coin, false);
+        if (tradeSuccess)
+            lastPriceMargin = lastPriceMargin.multiply(percent);
+        return tradeSuccess;
+    }
+
+    private boolean validateFree(String sellCenter, String buyCenter, BigDecimal buyPrice) {
+        /**check free_amount**/
+        BigDecimal freeAmount;
+        if (AllocationSource.tickAmount.compareTo(freeAmount = AllocationSource.getFreeAmount(sellCenter)) == 1) {
+            log.warn("can order but " + sellCenter + "'s free_amount is'n enough ! tick_amount : "
+                    + AllocationSource.tickAmount + " " + sellCenter + "_free_amount = " + freeAmount);
+            return false;
         }
-        // TODO: 17-1-4 下单
+        /**check free_price**/
+        BigDecimal totalPrice;
+        BigDecimal freePrice;
+        if ((freePrice = AllocationSource.getFreePrice(buyCenter)).compareTo(totalPrice = buyPrice.multiply(AllocationSource.tickAmount)) == -1) {
+            log.warn("can order but " + buyCenter + "'s free_price is'n enough !  total_price : "
+                    + totalPrice + " " + buyCenter + "'s free_price : " + freePrice);
+            return false;
+        }
         return true;
     }
 }

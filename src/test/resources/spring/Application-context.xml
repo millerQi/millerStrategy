@@ -42,6 +42,5 @@
         <property name="testOnBorrow" value="true"/>
         <property name="testOnReturn" value="true"/>
         <property name="poolPreparedStatements" value="false"/>
-
     </bean>
 </beans>

@@ -129,8 +129,8 @@ public class DepthDataSource {
 
     /*查看库中是否需要迁移*/
     private String isReverse() {
-        boolean isReverse = AllocationSource.isReverse;//是否需要迁移头寸
-        String center = AllocationSource.reverseCenter;//并获取迁移至哪个交易所
+        boolean isReverse = AllocationSource.getReverse();//是否需要迁移头寸
+        String center = AllocationSource.getReverseCenter();//并获取迁移至哪个交易所
         return isReverse ? center : null;
     }
 }

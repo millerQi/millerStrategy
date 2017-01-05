@@ -2,8 +2,10 @@ package com.miller.priceMargin.service;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.miller.priceMargin.enumUtil.TradeCenter;
 import com.miller.priceMargin.model.order.OrderInfo;
 import com.miller.priceMargin.model.order.TradeInfo;
+import com.miller.priceMargin.model.order.UserInfo;
 import com.miller.priceMargin.util.StringUtil;
 import org.springframework.stereotype.Component;
 
@@ -19,9 +21,9 @@ public class APIResultHandle {
         if (StringUtil.isEmpty(center) || StringUtil.isEmpty(result))
             return null;
         JSONObject object = JSON.parseObject(result);
-        if (center.equals("okcoin"))
+        if (center.equals(TradeCenter.okcoin.name()))
             return new TradeInfo(object.getLong("order_id"), object.getString("result"));
-        else if (center.equals("huobi"))
+        else if (center.equals(TradeCenter.huobi.name()))
             return new TradeInfo(object.getLong("id"), object.getString("result"));
         return null;
     }
@@ -31,7 +33,7 @@ public class APIResultHandle {
             return null;
         JSONObject o = JSON.parseObject(result);
         OrderInfo orderInfo = new OrderInfo();
-        if (center.equals("okcoin")) {
+        if (center.equals(TradeCenter.okcoin.name())) {
             orderInfo.setResult(o.getString("result"));
             o = o.getJSONArray("orders").getJSONObject(0);
             orderInfo.setAmount(o.getBigDecimal("amount"));
@@ -40,7 +42,7 @@ public class APIResultHandle {
             orderInfo.setPrice(o.getBigDecimal("price"));
             orderInfo.setTradeDirection(o.getString("type"));
             return orderInfo;
-        } else if (center.equals("huobi")) {
+        } else if (center.equals(TradeCenter.huobi.name())) {
             orderInfo.setAmount(o.getBigDecimal("order_amount"));
             orderInfo.setAvgPrice(o.getBigDecimal("processed_price"));
             orderInfo.setDealAmount(o.getBigDecimal("processed_amount"));
@@ -63,10 +65,30 @@ public class APIResultHandle {
         if (StringUtil.isEmpty(ret) || StringUtil.isEmpty(center))
             return null;
         JSONObject object = JSON.parseObject(ret);
-        if (center.equals("huobi"))
+        if (center.equals(TradeCenter.huobi.name()))
             return object.getBigDecimal("net_asset");
-        else if (center.equals("okcoin")) {
+        else if (center.equals(TradeCenter.okcoin.name())) {
             return object.getJSONObject("info").getJSONObject("funds").getJSONObject("asset").getBigDecimal("net");
+        }
+        return null;
+    }
+
+    public UserInfo getUserInfo(String ret, String center) {
+        if (StringUtil.isEmpty(ret) || StringUtil.isEmpty(center))
+            return null;
+        UserInfo userInfo = new UserInfo();
+        JSONObject object = JSON.parseObject(ret);
+        if (center.equals(TradeCenter.huobi.name())) {
+            userInfo.setFreeCny(object.getBigDecimal("available_cny_display"));
+            userInfo.setFreeLTC(object.getBigDecimal("available_ltc_display"));
+            userInfo.setFreeBTC(object.getBigDecimal("available_btc_display"));
+            return userInfo;
+        } else if (center.equals(TradeCenter.okcoin.name())) {
+            object = object.getJSONObject("info").getJSONObject("funds").getJSONObject("free");
+            userInfo.setFreeBTC(object.getBigDecimal("btc"));
+            userInfo.setFreeCny(object.getBigDecimal("cny"));
+            userInfo.setFreeLTC(object.getBigDecimal("ltc"));
+            return userInfo;
         }
         return null;
     }
