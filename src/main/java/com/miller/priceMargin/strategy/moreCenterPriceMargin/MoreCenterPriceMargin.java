@@ -50,7 +50,7 @@ public class MoreCenterPriceMargin {
     /*上次卖方交易所*/
     private String lastSellCenter;
     /*价差上升百分比系数*/
-    private BigDecimal percent = BigDecimal.valueOf(1.2);
+    private BigDecimal percent = BigDecimal.valueOf(1.1);
 
 
     public void startStrategy() {

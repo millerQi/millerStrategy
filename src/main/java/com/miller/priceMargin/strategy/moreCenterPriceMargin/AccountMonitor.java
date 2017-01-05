@@ -36,7 +36,7 @@ public class AccountMonitor {
 
     private int count = 0;
 
-    @Scheduled(fixedRate = 60000)//一分钟执行一次
+    @Scheduled(fixedRate = 30000)//30s执行一次
     public void startAccountMonitor() {
         if (count == 0) {
             log.info("start account monitor!");
