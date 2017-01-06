@@ -4,7 +4,7 @@ import com.miller.priceMargin.model.Order;
 import com.miller.priceMargin.model.OrderGain;
 import com.miller.priceMargin.model.order.OrderInfo;
 import com.miller.priceMargin.model.order.TradeInfo;
-import com.miller.priceMargin.service.APIResultHandle;
+import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.service.PriceMarginService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;

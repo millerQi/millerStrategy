@@ -3,6 +3,7 @@ package com.miller.priceMargin.tradeCenter.okcoin;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
+import com.miller.priceMargin.util.URLUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Consts;
 import org.apache.http.HttpEntity;
@@ -125,36 +126,7 @@ public class HttpUtilManager {
     }
 
     public String requestHttpPost(String url_prex, String url, Map<String, String> params) {
-
-        IdleConnectionMonitor();
-        url = url_prex + url;
-        HttpPost method = this.httpPostMethod(url);
-        List<NameValuePair> valuePairs = this.convertMap2PostParams(params);
-        UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(valuePairs, Consts.UTF_8);
-        method.setEntity(urlEncodedFormEntity);
-        method.setConfig(requestConfig);
-        String responseData = "";
-        try {
-            HttpResponse response = client.execute(method);
-            HttpEntity entity = response.getEntity();
-            if (entity == null) {
-                return "";
-            }
-            InputStream is = null;
-
-            try {
-                is = entity.getContent();
-                responseData = IOUtils.toString(is, "UTF-8");
-            } finally {
-                if (is != null) {
-                    is.close();
-                }
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        return responseData;
-
+        return URLUtil.doPost(url_prex + url, params);
     }
 
     private List<NameValuePair> convertMap2PostParams(Map<String, String> params) {

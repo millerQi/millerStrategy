@@ -2,7 +2,7 @@ package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
 import com.miller.priceMargin.model.order.OrderInfo;
 import com.miller.priceMargin.model.order.TradeInfo;
-import com.miller.priceMargin.service.APIResultHandle;
+import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.service.PriceMarginService;
 import com.miller.priceMargin.tradeCenter.CommonTradeService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
@@ -41,7 +41,7 @@ public class TradeService {
     boolean trade(String sellCenter, String buyCenter, BigDecimal sellPrice, BigDecimal buyPrice,
                   BigDecimal sellAmount, BigDecimal buyAmount, int coin, boolean isReverse) {
         TradeInfo sellInfo = commonTradeService.trade(sellCenter, sellPrice, sellAmount, "sell", coin);
-        if (sellInfo.getResult().equals("false")) {
+        if (sellInfo == null) {
             log.error("sell order failed! sell_center :" + sellCenter + " , sell_amount " + sellAmount
                     + " , buy_center :" + buyCenter + " ,buy_amount :" + buyAmount);
             return false;
@@ -49,7 +49,7 @@ public class TradeService {
         AllocationSource.addFreeAmount(sellCenter, coin, sellAmount.subtract(BigDecimal.valueOf(2).multiply(sellAmount)));
 
         TradeInfo buyInfo = commonTradeService.trade(buyCenter, buyPrice, buyAmount, "buy", coin);
-        if (buyInfo.getResult().equals("false")) {
+        if (buyInfo == null) {
             //// TODO: 17-1-5 平卖出成功部分
             log.error("sell order complete , but buy order failed , sell_center :" + sellCenter + " , sell_amount " + sellAmount
                     + " , buy_center :" + buyCenter + " ,buy_amount :" + buyAmount);
@@ -103,10 +103,16 @@ public class TradeService {
         // TODO: 17-1-5 记录订单
         priceMarginService.addGains(dealGains);
         String msg = head + "| sell_avg_price | " + sellAvgPrice + " | buy_avg_price | " + buyAvgPrice + " | amount | " + sellOrderInfo.getAmount() + " | gains | " + dealGains + " | all_gains | " + priceMarginService.getGains() + " |";
-        if (dealGains.compareTo(BigDecimal.ZERO) >= 0)
-            log.info(msg);
-        else
-            log.error(msg);
+        if (dealGains.compareTo(BigDecimal.ZERO) >= 0) {
+            AllocationSource.gainsOrderCount++;
+            log.info("start_time :" + AllocationSource.startTime);
+            log.info(msg + " gains_order_count | " + AllocationSource.gainsOrderCount + " | " + " no_gains_order_count | " + AllocationSource.noGainsOrderCount + " | no_gains | " + AllocationSource.noGains + " |");
+        } else {
+            AllocationSource.noGainsOrderCount++;
+            AllocationSource.noGains = AllocationSource.noGains.add(dealGains);
+            log.info("start_time :" + AllocationSource.startTime);
+            log.error(msg + " gains_order_count | " + AllocationSource.gainsOrderCount + " | " + " no_gains_order_count | " + AllocationSource.noGainsOrderCount + " | no_gains | " + AllocationSource.noGains + " |");
+        }
     }
 
     private void updateLastPrice() {

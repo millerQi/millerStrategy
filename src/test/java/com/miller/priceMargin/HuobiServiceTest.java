@@ -1,7 +1,7 @@
 package com.miller.priceMargin;
 
 import com.miller.priceMargin.model.order.UserInfo;
-import com.miller.priceMargin.service.APIResultHandle;
+import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
 import org.junit.Test;

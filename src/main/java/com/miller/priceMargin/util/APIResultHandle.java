@@ -1,4 +1,4 @@
-package com.miller.priceMargin.service;
+package com.miller.priceMargin.util;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -6,7 +6,8 @@ import com.miller.priceMargin.enumUtil.TradeCenter;
 import com.miller.priceMargin.model.order.OrderInfo;
 import com.miller.priceMargin.model.order.TradeInfo;
 import com.miller.priceMargin.model.order.UserInfo;
-import com.miller.priceMargin.util.StringUtil;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,14 +18,27 @@ import java.math.BigDecimal;
 @Component
 public class APIResultHandle {
 
+    private Log log = LogFactory.getLog(APIResultHandle.class);
+
     public TradeInfo getTradeInfo(String result, String center) {
         if (StringUtil.isEmpty(center) || StringUtil.isEmpty(result))
             return null;
         JSONObject object = JSON.parseObject(result);
-        if (center.equals(TradeCenter.okcoin.name()))
-            return new TradeInfo(object.getLong("order_id"), object.getString("result"));
-        else if (center.equals(TradeCenter.huobi.name()))
-            return new TradeInfo(object.getLong("id"), object.getString("result"));
+        if (center.equals(TradeCenter.okcoin.name())) {
+            Long id = object.getLong("order_id");
+            if (id == null) {
+                log.error("Trade failed :" + result);
+                return null;
+            }
+            return new TradeInfo(id, object.getString("result"));
+        } else if (center.equals(TradeCenter.huobi.name())) {
+            Long id = object.getLong("id");
+            if (id == null) {
+                log.error("Trade failed :" + result);
+                return null;
+            }
+            return new TradeInfo(id, object.getString("result"));
+        }
         return null;
     }
 

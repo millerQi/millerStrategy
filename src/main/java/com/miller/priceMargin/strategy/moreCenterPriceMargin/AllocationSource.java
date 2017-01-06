@@ -13,10 +13,10 @@ import java.math.BigDecimal;
 public class AllocationSource {
     static boolean strategyOpen = true;
     /*盈利价差*/
-    static BigDecimal price_margin = BigDecimal.valueOf(0.04);
+    static BigDecimal price_margin = BigDecimal.valueOf(0.02);
 
     /*迁移头寸，可接受的最大亏损 以一个币种为单位*/
-    static BigDecimal canReversePriceM = BigDecimal.valueOf(0.01);
+    static BigDecimal canReversePriceM = BigDecimal.valueOf(0);
 
     //分批挂单量
     static BigDecimal tickAmount = BigDecimal.valueOf(1);
@@ -24,7 +24,7 @@ public class AllocationSource {
     //1 为btc 2 为 ltc
     static int coin = 2;
 
-    public static int depthSize = 2;
+    public static int depthSize = 1;
 
     public static String getCoinType() {
         if (coin == 1)
@@ -108,5 +108,10 @@ public class AllocationSource {
                 hbFreeLTCAmount = hbFreeLTCAmount.add(amount);
         }
     }
+
+    static long startTime;
+    static int gainsOrderCount;
+    static int noGainsOrderCount;
+    static BigDecimal noGains = BigDecimal.ZERO;//总亏损
 
 }

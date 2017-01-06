@@ -9,6 +9,6 @@ public class StringUtil {
     }
 
     public static String getString(Object sellCenter) {
-        return sellCenter == null ? null : (String) sellCenter;
+        return sellCenter == null ? null : String.valueOf(sellCenter);
     }
 }

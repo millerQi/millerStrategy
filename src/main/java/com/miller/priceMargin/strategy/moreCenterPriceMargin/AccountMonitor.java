@@ -2,7 +2,7 @@ package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
 import com.miller.priceMargin.enumUtil.TradeCenter;
 import com.miller.priceMargin.model.order.UserInfo;
-import com.miller.priceMargin.service.APIResultHandle;
+import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
 import org.apache.commons.logging.Log;
@@ -36,7 +36,7 @@ public class AccountMonitor {
 
     private int count = 0;
 
-    @Scheduled(fixedRate = 30000)//30s执行一次
+    @Scheduled(fixedRate = 60000)//一分钟执行一次
     public void startAccountMonitor() {
         if (count == 0) {
             log.info("start account monitor!");

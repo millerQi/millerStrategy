@@ -1,6 +1,6 @@
 package com.miller.priceMargin;
 
-import com.miller.priceMargin.service.APIResultHandle;
+import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -2,7 +2,7 @@ package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
 import com.miller.priceMargin.enumUtil.TradeCenter;
 import com.miller.priceMargin.model.order.UserInfo;
-import com.miller.priceMargin.service.APIResultHandle;
+import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.service.PriceMarginService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
@@ -43,8 +43,6 @@ public class MoreCenterPriceMargin {
 
     private Log log = LogFactory.getLog(MoreCenterPriceMargin.class);
 
-    /*持续套利*/
-    private boolean continued = false;
     /*上次下单差价*/
     private BigDecimal lastPriceMargin;
     /*上次卖方交易所*/
@@ -84,6 +82,8 @@ public class MoreCenterPriceMargin {
         AllocationSource.hbFreeBTCAmount = hbUserInfo.getFreeBTC();
         AllocationSource.hbFreeLTCAmount = hbUserInfo.getFreeLTC();
 
+        AllocationSource.startTime = System.currentTimeMillis();
+
         BigDecimal okNetAsset = apiResultHandle.getNetAsset(okcoinRet, "okcoin");
         BigDecimal hbNetAsset = apiResultHandle.getNetAsset(hbRet, "huobi");
         priceMarginService.updateFreePrice(okNetAsset, hbNetAsset);
@@ -99,7 +99,7 @@ public class MoreCenterPriceMargin {
         BigDecimal reverseBuyAmount = (BigDecimal) map.get("reverseBuyAmount");
 
         /*迁移头寸是套利下单头寸的2倍*/
-        BigDecimal tickerAmount = AllocationSource.tickAmount.multiply(BigDecimal.valueOf(2));
+        BigDecimal tickerAmount = AllocationSource.tickAmount.multiply(BigDecimal.valueOf(1.5));
         /**check depth amount**/
         if (tickerAmount.compareTo(reverseBuyAmount) == 1
                 || tickerAmount.compareTo(reverseSellAmount) == 1)
@@ -129,11 +129,10 @@ public class MoreCenterPriceMargin {
         BigDecimal buyPrice = CommonUtil.getDecimalMuchBigPrice((BigDecimal) map.get("buyPrice"));
         BigDecimal sellPrice = CommonUtil.getDecimalMuchSmallPrice((BigDecimal) map.get("sellPrice"));
         /**判断是否持续上次的搬砖**/
-        if (continued && !StringUtil.isEmpty(lastSellCenter) && lastSellCenter.equals(sellCenter)) {
+        if (!StringUtil.isEmpty(lastSellCenter) && lastSellCenter.equals(sellCenter)) {
             if (priceMargin.compareTo(lastPriceMargin.multiply(percent).setScale(2, BigDecimal.ROUND_DOWN)) == -1)
                 return false;
         } else {//初始化
-            continued = true;
             lastSellCenter = sellCenter;
             lastPriceMargin = priceMargin;
         }
@@ -155,20 +154,9 @@ public class MoreCenterPriceMargin {
 
     private boolean validateFree(String sellCenter, String buyCenter, BigDecimal buyPrice, BigDecimal tickerAmount) {
         /**check free_amount**/
-        BigDecimal freeAmount;
-        if (tickerAmount.compareTo(freeAmount = AllocationSource.getFreeAmount(sellCenter)) == 1) {
-//            log.warn("can order but " + sellCenter + "'s free_amount is'n enough ! tick_amount : "
-//                    + tickerAmount + " " + sellCenter + "_free_amount = " + freeAmount);
+        if (tickerAmount.compareTo(AllocationSource.getFreeAmount(sellCenter)) == 1)
             return false;
-        }
         /**check free_price**/
-        BigDecimal totalPrice;
-        BigDecimal freePrice;
-        if ((freePrice = AllocationSource.getFreePrice(buyCenter)).compareTo(totalPrice = buyPrice.multiply(tickerAmount)) == -1) {
-//            log.warn("can order but " + buyCenter + "'s free_price is'n enough !  total_price : "
-//                    + totalPrice + " " + buyCenter + "'s free_price : " + freePrice);
-            return false;
-        }
-        return true;
+        return buyPrice.multiply(tickerAmount).compareTo(AllocationSource.getFreePrice(buyCenter)) == -1;
     }
 }
