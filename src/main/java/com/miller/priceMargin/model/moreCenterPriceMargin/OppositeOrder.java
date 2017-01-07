@@ -13,7 +13,6 @@ public class OppositeOrder {
     private String buyCenter;
     private BigDecimal buyAvgPrice;
     private BigDecimal buyAmount;
-    private boolean tradeStatus;
     private BigDecimal gains;
     private Timestamp createTime;
 
@@ -63,14 +62,6 @@ public class OppositeOrder {
 
     public void setBuyAmount(BigDecimal buyAmount) {
         this.buyAmount = buyAmount;
-    }
-
-    public boolean isTradeStatus() {
-        return tradeStatus;
-    }
-
-    public void setTradeStatus(boolean tradeStatus) {
-        this.tradeStatus = tradeStatus;
     }
 
     public BigDecimal getGains() {

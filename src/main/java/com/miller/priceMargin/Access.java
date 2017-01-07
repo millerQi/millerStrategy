@@ -1,6 +1,5 @@
 package com.miller.priceMargin;
 
-import com.miller.priceMargin.strategy.DoubleCenterPriceMargin;
 import com.miller.priceMargin.strategy.moreCenterPriceMargin.MoreCenterPriceMargin;
 import org.apache.log4j.PropertyConfigurator;
 import org.springframework.context.ApplicationContext;
@@ -17,12 +16,6 @@ public class Access {
     public static void main(String[] args) throws InterruptedException {
         loadProperties();
         ApplicationContext context = new ClassPathXmlApplicationContext("classpath:spring/Application-context.xml");
-//        DoubleCenterPriceMargin doubleCenter = context.getBean(DoubleCenterPriceMargin.class);
-//        doubleCenter.initData();//初始化资产
-//        while (true) {
-//            doubleCenter.checkDepthAndStartTrade();
-//            Thread.sleep(1500);
-//        }
         MoreCenterPriceMargin moreCenter = context.getBean(MoreCenterPriceMargin.class);
         moreCenter.startStrategy();
     }

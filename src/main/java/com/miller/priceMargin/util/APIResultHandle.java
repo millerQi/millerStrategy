@@ -2,7 +2,7 @@ package com.miller.priceMargin.util;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.miller.priceMargin.enumUtil.TradeCenter;
+import com.miller.priceMargin.enumUtil.TradeCenterEnum;
 import com.miller.priceMargin.model.order.OrderInfo;
 import com.miller.priceMargin.model.order.TradeInfo;
 import com.miller.priceMargin.model.order.UserInfo;
@@ -24,14 +24,14 @@ public class APIResultHandle {
         if (StringUtil.isEmpty(center) || StringUtil.isEmpty(result))
             return null;
         JSONObject object = JSON.parseObject(result);
-        if (center.equals(TradeCenter.okcoin.name())) {
+        if (center.equals(TradeCenterEnum.okcoin.name())) {
             Long id = object.getLong("order_id");
             if (id == null) {
                 log.error("Trade failed :" + result);
                 return null;
             }
             return new TradeInfo(id, object.getString("result"));
-        } else if (center.equals(TradeCenter.huobi.name())) {
+        } else if (center.equals(TradeCenterEnum.huobi.name())) {
             Long id = object.getLong("id");
             if (id == null) {
                 log.error("Trade failed :" + result);
@@ -47,7 +47,7 @@ public class APIResultHandle {
             return null;
         JSONObject o = JSON.parseObject(result);
         OrderInfo orderInfo = new OrderInfo();
-        if (center.equals(TradeCenter.okcoin.name())) {
+        if (center.equals(TradeCenterEnum.okcoin.name())) {
             orderInfo.setResult(o.getString("result"));
             o = o.getJSONArray("orders").getJSONObject(0);
             orderInfo.setAmount(o.getBigDecimal("amount"));
@@ -56,7 +56,7 @@ public class APIResultHandle {
             orderInfo.setPrice(o.getBigDecimal("price"));
             orderInfo.setTradeDirection(o.getString("type"));
             return orderInfo;
-        } else if (center.equals(TradeCenter.huobi.name())) {
+        } else if (center.equals(TradeCenterEnum.huobi.name())) {
             orderInfo.setAmount(o.getBigDecimal("order_amount"));
             orderInfo.setAvgPrice(o.getBigDecimal("processed_price"));
             orderInfo.setDealAmount(o.getBigDecimal("processed_amount"));
@@ -79,9 +79,9 @@ public class APIResultHandle {
         if (StringUtil.isEmpty(ret) || StringUtil.isEmpty(center))
             return null;
         JSONObject object = JSON.parseObject(ret);
-        if (center.equals(TradeCenter.huobi.name()))
+        if (center.equals(TradeCenterEnum.huobi.name()))
             return object.getBigDecimal("net_asset");
-        else if (center.equals(TradeCenter.okcoin.name())) {
+        else if (center.equals(TradeCenterEnum.okcoin.name())) {
             return object.getJSONObject("info").getJSONObject("funds").getJSONObject("asset").getBigDecimal("net");
         }
         return null;
@@ -92,16 +92,32 @@ public class APIResultHandle {
             return null;
         UserInfo userInfo = new UserInfo();
         JSONObject object = JSON.parseObject(ret);
-        if (center.equals(TradeCenter.huobi.name())) {
+        if (center.equals(TradeCenterEnum.huobi.name())) {
             userInfo.setFreeCny(object.getBigDecimal("available_cny_display"));
             userInfo.setFreeLTC(object.getBigDecimal("available_ltc_display"));
             userInfo.setFreeBTC(object.getBigDecimal("available_btc_display"));
+            userInfo.setBorrowBTC(object.getBigDecimal("loan_btc_display"));
+            userInfo.setBorrowLTC(object.getBigDecimal("loan_ltc_display"));
+            userInfo.setBorrowPrice(object.getBigDecimal("loan_cny_display"));
+            userInfo.setNetAsset(object.getBigDecimal("net_asset"));
             return userInfo;
-        } else if (center.equals(TradeCenter.okcoin.name())) {
-            object = object.getJSONObject("info").getJSONObject("funds").getJSONObject("free");
-            userInfo.setFreeBTC(object.getBigDecimal("btc"));
-            userInfo.setFreeCny(object.getBigDecimal("cny"));
-            userInfo.setFreeLTC(object.getBigDecimal("ltc"));
+        } else if (center.equals(TradeCenterEnum.okcoin.name())) {
+            object = object.getJSONObject("info").getJSONObject("funds");
+            userInfo.setNetAsset(object.getJSONObject("asset").getBigDecimal("net"));
+            JSONObject freeObject = object.getJSONObject("free");
+            JSONObject borrowObject = object.getJSONObject("borrow");
+            if (borrowObject == null) {
+                userInfo.setBorrowPrice(BigDecimal.ZERO);
+                userInfo.setBorrowLTC(BigDecimal.ZERO);
+                userInfo.setBorrowBTC(BigDecimal.ZERO);
+            } else {
+                userInfo.setBorrowBTC(borrowObject.getBigDecimal("btc"));
+                userInfo.setBorrowPrice(borrowObject.getBigDecimal("cny"));
+                userInfo.setBorrowLTC(borrowObject.getBigDecimal("ltc"));
+            }
+            userInfo.setFreeBTC(freeObject.getBigDecimal("btc"));
+            userInfo.setFreeCny(freeObject.getBigDecimal("cny"));
+            userInfo.setFreeLTC(freeObject.getBigDecimal("ltc"));
             return userInfo;
         }
         return null;

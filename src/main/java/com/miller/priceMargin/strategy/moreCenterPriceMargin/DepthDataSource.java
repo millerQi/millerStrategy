@@ -1,6 +1,6 @@
 package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
-import com.miller.priceMargin.enumUtil.TradeCenter;
+import com.miller.priceMargin.enumUtil.TradeCenterEnum;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.util.StringUtil;
 import org.apache.commons.logging.Log;
@@ -80,18 +80,19 @@ public class DepthDataSource {
         if (!StringUtil.isEmpty(targetCenter = isReverse())) {
             BigDecimal hbS = hbSellPM.abs();
             BigDecimal okS = okSellPM.abs();
+            BigDecimal reversePriceMargin = MoreCenterPriceMargin.systemAllocation.getReversePriceMargin();
             /**满足迁移条件**/
-            if (targetCenter.equals(TradeCenter.okcoin.name()) && hbS.compareTo(AllocationSource.canReversePriceM) <= 0)
-                packageReverse(map, TradeCenter.huobi.name(), TradeCenter.okcoin.name(), hbBidPrice, okAskPrice, hbBidAmount, okAskAmount);
-            else if (targetCenter.equals(TradeCenter.huobi.name()) && okS.compareTo(AllocationSource.canReversePriceM) <= 0)
-                packageReverse(map, TradeCenter.okcoin.name(), TradeCenter.huobi.name(), okBidPrice, hbAskPrice, okBidAmount, hbAskAmount);
+            if (targetCenter.equals(TradeCenterEnum.okcoin.name()) && hbS.compareTo(reversePriceMargin) <= 0)
+                packageReverse(map, TradeCenterEnum.huobi.name(), TradeCenterEnum.okcoin.name(), hbBidPrice, okAskPrice, hbBidAmount, okAskAmount);
+            else if (targetCenter.equals(TradeCenterEnum.huobi.name()) && okS.compareTo(reversePriceMargin) <= 0)
+                packageReverse(map, TradeCenterEnum.okcoin.name(), TradeCenterEnum.huobi.name(), okBidPrice, hbAskPrice, okBidAmount, hbAskAmount);
         }
         /**火币sell - ok buy 》= 盈利价差**/
-        if (hbSellPM.compareTo(AllocationSource.price_margin) >= 0)
-            packageGainsPriceMargin(map, TradeCenter.huobi.name(), TradeCenter.okcoin.name(), hbSellPM, hbBidPrice, okAskPrice, hbBidAmount, okAskAmount);
+        if (hbSellPM.compareTo(MoreCenterPriceMargin.systemAllocation.getPriceMargin()) >= 0)
+            packageGainsPriceMargin(map, TradeCenterEnum.huobi.name(), TradeCenterEnum.okcoin.name(), hbSellPM, hbBidPrice, okAskPrice, hbBidAmount, okAskAmount);
         /**ok sell - 火币 buy 》= 盈利价差**/
-        else if (okSellPM.compareTo(AllocationSource.price_margin) >= 0)
-            packageGainsPriceMargin(map, TradeCenter.okcoin.name(), TradeCenter.huobi.name(), okSellPM, okBidPrice, hbAskPrice, okBidAmount, hbAskAmount);
+        else if (okSellPM.compareTo(MoreCenterPriceMargin.systemAllocation.getPriceMargin()) >= 0)
+            packageGainsPriceMargin(map, TradeCenterEnum.okcoin.name(), TradeCenterEnum.huobi.name(), okSellPM, okBidPrice, hbAskPrice, okBidAmount, hbAskAmount);
         long timeNow;
         if ((timeNow = System.currentTimeMillis()) - lastWarnTime > 300000) {//5分钟心跳一次
             log.info("pong!");

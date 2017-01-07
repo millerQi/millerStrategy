@@ -1,9 +1,14 @@
 package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
-import com.miller.priceMargin.enumUtil.TradeCenter;
+import com.miller.priceMargin.enumUtil.TradeCenterEnum;
+import com.miller.priceMargin.model.moreCenterPriceMargin.SystemAllocation;
+import com.miller.priceMargin.model.moreCenterPriceMargin.SystemStatus;
+import com.miller.priceMargin.model.moreCenterPriceMargin.TradeCenter;
 import com.miller.priceMargin.model.order.UserInfo;
+import com.miller.priceMargin.service.SystemAllocationService;
+import com.miller.priceMargin.service.SystemStatusService;
+import com.miller.priceMargin.service.TradeCenterService;
 import com.miller.priceMargin.util.APIResultHandle;
-import com.miller.priceMargin.service.PriceMarginService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
 import com.miller.priceMargin.util.CommonUtil;
@@ -22,38 +27,42 @@ import java.util.Map;
  */
 @Component
 public class MoreCenterPriceMargin {
-
     @Autowired
     private DepthDataSource depthDataSource;
-
     @Autowired
     private TradeService tradeService;
-
     @Autowired
     private HuobiService huobiService;
-
     @Autowired
     private OkcoinService okcoinService;
-
     @Autowired
     private APIResultHandle apiResultHandle;
-
     @Autowired
-    private PriceMarginService priceMarginService;
+    private SystemAllocationService systemAllocationService;
+    @Autowired
+    private TradeCenterService tradeCenterService;
+    @Autowired
+    private SystemStatusService systemStatusService;
 
     private Log log = LogFactory.getLog(MoreCenterPriceMargin.class);
 
-    /*上次下单差价*/
-    private BigDecimal lastPriceMargin;
-    /*上次卖方交易所*/
-    private String lastSellCenter;
     /*价差上升百分比系数*/
     private BigDecimal percent = BigDecimal.valueOf(1.1);
 
+    public static SystemAllocation systemAllocation;
 
     public void startStrategy() {
+        /**初始化系统配置**/
+        initSystemAllocation();
+
+        /**检查系统状态**/
+        initSystemStatus();
+
+        /**同步用户详情**/
         initAccount();
-        while (AllocationSource.strategyOpen) {
+        while (true) {
+            /**预处理**/
+            pretreatment();
             CommonUtil.sleep(1000);
             /**获取深度**/
             Map<String, Object> map = depthDataSource.getTradeCenterDepth();
@@ -69,25 +78,74 @@ public class MoreCenterPriceMargin {
         }
     }
 
+    private void pretreatment() {
+        systemAllocation = systemAllocationService.getSystemAllocation();
+        if (!systemAllocation.isStrategyOpen()) {
+            log.warn("system exit by user!");
+            System.exit(0);
+        }
+        AllocationSource.coin = systemAllocation.getCoin();
+        log.info("pretreatment complete");
+    }
+
+    private void initSystemStatus() {
+        if (systemStatusService.existData() == 0) {
+            SystemStatus systemStatus = new SystemStatus();
+            systemStatus.setAllGains(BigDecimal.ZERO);
+            systemStatus.setCoinSellCount(BigDecimal.ZERO);
+            systemStatus.setGainsOrderCount(0);
+            systemStatus.setLossOrderCount(0);
+            systemStatusService.save(systemStatus);
+        }
+        log.info("init system status complete");
+    }
+
+    private void initSystemAllocation() {
+        if (systemAllocationService.getSystemAllocation() == null) {
+            SystemAllocation systemAllocation = new SystemAllocation();
+            systemAllocation.setCoin(2);
+            systemAllocation.setPriceMargin(BigDecimal.valueOf(0.03));
+            systemAllocation.setReversePriceMargin(BigDecimal.ZERO);
+            systemAllocation.setTickAmount(BigDecimal.ONE);
+            systemAllocation.setReverseMultipleAmount(1.2f);
+            systemAllocation.setStrategyOpen(true);
+            systemAllocationService.saveSystemAllocation(systemAllocation);
+        }
+        log.info("init system allocation complete");
+    }
+
     private void initAccount() {
-        String okcoinRet = okcoinService.userinfo();
-        String hbRet = huobiService.getAccountInfo();
-        UserInfo okUserInfo = apiResultHandle.getUserInfo(okcoinRet, TradeCenter.okcoin.name());
-        UserInfo hbUserInfo = apiResultHandle.getUserInfo(hbRet, TradeCenter.huobi.name());
-        AllocationSource.okFreePrice = okUserInfo.getFreeCny();
-        AllocationSource.okFreeBTCAmount = okUserInfo.getFreeBTC();
-        AllocationSource.okFreeLTCAmount = okUserInfo.getFreeLTC();
-
-        AllocationSource.hbFreePrice = hbUserInfo.getFreeCny();
-        AllocationSource.hbFreeBTCAmount = hbUserInfo.getFreeBTC();
-        AllocationSource.hbFreeLTCAmount = hbUserInfo.getFreeLTC();
-
-        AllocationSource.startTime = System.currentTimeMillis();
-
-        BigDecimal okNetAsset = apiResultHandle.getNetAsset(okcoinRet, "okcoin");
-        BigDecimal hbNetAsset = apiResultHandle.getNetAsset(hbRet, "huobi");
-        priceMarginService.updateFreePrice(okNetAsset, hbNetAsset);
-        priceMarginService.updateLastPrice(okNetAsset, hbNetAsset);
+        UserInfo okUserInfo = apiResultHandle.getUserInfo(okcoinService.userinfo(), TradeCenterEnum.okcoin.name());
+        UserInfo hbUserInfo = apiResultHandle.getUserInfo(huobiService.getAccountInfo(), TradeCenterEnum.huobi.name());
+        SystemAllocation systemAllocation = systemAllocationService.getSystemAllocation();
+        if (systemAllocation == null) {
+            log.error("system error ! not found system allocation !");
+            System.exit(0);
+        }
+        if (okUserInfo == null || hbUserInfo == null) {
+            log.error("userInfo get error ,try start again!");
+            CommonUtil.sleep(1000);
+            initAccount();
+        }
+        int coin = systemAllocation.getCoin();
+        BigDecimal okFreeAmount, okBorrowAmount, hbFreeAmount, hbBorrowAmount;
+        if (coin == 1) {
+            okFreeAmount = okUserInfo.getFreeBTC();
+            okBorrowAmount = okUserInfo.getBorrowBTC();
+            hbFreeAmount = hbUserInfo.getFreeBTC();
+            hbBorrowAmount = hbUserInfo.getBorrowBTC();
+        } else {
+            okFreeAmount = okUserInfo.getFreeLTC();
+            okBorrowAmount = okUserInfo.getBorrowLTC();
+            hbFreeAmount = hbUserInfo.getFreeLTC();
+            hbBorrowAmount = hbUserInfo.getBorrowLTC();
+        }
+        TradeCenter okCenter = new TradeCenter(TradeCenterEnum.okcoin.name(), okUserInfo.getNetAsset(), okUserInfo.getFreeCny(), okFreeAmount, okBorrowAmount, okUserInfo.getBorrowPrice());
+        TradeCenter hbCenter = new TradeCenter(TradeCenterEnum.huobi.name(), hbUserInfo.getNetAsset(), hbUserInfo.getFreeCny(), hbFreeAmount, hbBorrowAmount, hbUserInfo.getBorrowPrice());
+        tradeCenterService.truncateTable();
+        tradeCenterService.saveTradeCenter(okCenter);
+        tradeCenterService.saveTradeCenter(hbCenter);
+        log.info("init account complete");
     }
 
     private boolean reverseAmountMethod(Map<String, Object> map) {
@@ -99,7 +157,7 @@ public class MoreCenterPriceMargin {
         BigDecimal reverseBuyAmount = (BigDecimal) map.get("reverseBuyAmount");
 
         /*迁移头寸是套利下单头寸的2倍*/
-        BigDecimal tickerAmount = AllocationSource.tickAmount.multiply(BigDecimal.valueOf(1.5));
+        BigDecimal tickerAmount = systemAllocation.getTickAmount().multiply(BigDecimal.valueOf(systemAllocation.getReverseMultipleAmount()));
         /**check depth amount**/
         if (tickerAmount.compareTo(reverseBuyAmount) == 1
                 || tickerAmount.compareTo(reverseSellAmount) == 1)
@@ -123,40 +181,31 @@ public class MoreCenterPriceMargin {
     private boolean orderMethod(Map<String, Object> map) {
         String sellCenter = StringUtil.getString(map.get("sellCenter"));
         String buyCenter = StringUtil.getString(map.get("buyCenter"));
-        BigDecimal priceMargin = (BigDecimal) map.get("priceMargin");
         BigDecimal sellAmount = (BigDecimal) map.get("sellAmount");
         BigDecimal buyAmount = (BigDecimal) map.get("buyAmount");
         BigDecimal buyPrice = CommonUtil.getDecimalMuchBigPrice((BigDecimal) map.get("buyPrice"));
         BigDecimal sellPrice = CommonUtil.getDecimalMuchSmallPrice((BigDecimal) map.get("sellPrice"));
-        /**判断是否持续上次的搬砖**/
-        if (!StringUtil.isEmpty(lastSellCenter) && lastSellCenter.equals(sellCenter)) {
-            if (priceMargin.compareTo(lastPriceMargin.multiply(percent).setScale(2, BigDecimal.ROUND_DOWN)) == -1)
-                return false;
-        } else {//初始化
-            lastSellCenter = sellCenter;
-            lastPriceMargin = priceMargin;
-        }
+        BigDecimal tickAmount = systemAllocation.getTickAmount();
         /**check depth amount**/
-        if (AllocationSource.tickAmount.compareTo(buyAmount) == 1
-                || AllocationSource.tickAmount.compareTo(sellAmount) == 1)
+        if (tickAmount.compareTo(buyAmount) == 1
+                || tickAmount.compareTo(sellAmount) == 1)
             return false;
 
         /**check freeAmount and freePrice**/
-        if (!validateFree(sellCenter, buyCenter, buyPrice, AllocationSource.tickAmount))
+        if (!validateFree(sellCenter, buyCenter, buyPrice, tickAmount))
             return false;
 
         /**trade**/
-        boolean tradeSuccess = tradeService.trade(sellCenter, buyCenter, sellPrice, buyPrice, AllocationSource.tickAmount, AllocationSource.tickAmount, AllocationSource.coin, false);
-        if (tradeSuccess)
-            lastPriceMargin = lastPriceMargin.multiply(percent);
-        return tradeSuccess;
+        return tradeService.trade(sellCenter, buyCenter, sellPrice, buyPrice, tickAmount, tickAmount, AllocationSource.coin, false);
     }
 
     private boolean validateFree(String sellCenter, String buyCenter, BigDecimal buyPrice, BigDecimal tickerAmount) {
+        BigDecimal freeAmount = tradeCenterService.getFreeAmount(sellCenter);
+        BigDecimal freePrice = tradeCenterService.getFreePrice(buyCenter);
         /**check free_amount**/
-        if (tickerAmount.compareTo(AllocationSource.getFreeAmount(sellCenter)) == 1)
+        if (tickerAmount.compareTo(freeAmount) == 1)
             return false;
         /**check free_price**/
-        return buyPrice.multiply(tickerAmount).compareTo(AllocationSource.getFreePrice(buyCenter)) == -1;
+        return buyPrice.multiply(tickerAmount).compareTo(freePrice) == -1;
     }
 }

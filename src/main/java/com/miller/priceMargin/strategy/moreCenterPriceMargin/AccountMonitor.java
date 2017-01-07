@@ -1,6 +1,6 @@
 package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
-import com.miller.priceMargin.enumUtil.TradeCenter;
+import com.miller.priceMargin.enumUtil.TradeCenterEnum;
 import com.miller.priceMargin.model.order.UserInfo;
 import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
@@ -42,8 +42,8 @@ public class AccountMonitor {
             log.info("start account monitor!");
             count++;
         }
-        UserInfo okcoinUserInfo = apiResultHandle.getUserInfo(okcoinService.userinfo(), TradeCenter.okcoin.name());
-        UserInfo huobiUserInfo = apiResultHandle.getUserInfo(huobiService.getAccountInfo(), TradeCenter.huobi.name());
+        UserInfo okcoinUserInfo = apiResultHandle.getUserInfo(okcoinService.userinfo(), TradeCenterEnum.okcoin.name());
+        UserInfo huobiUserInfo = apiResultHandle.getUserInfo(huobiService.getAccountInfo(), TradeCenterEnum.huobi.name());
         if (okcoinUserInfo == null) {
             log.error("account_monitor okcoin get user_info error");
             return;
@@ -78,14 +78,14 @@ public class AccountMonitor {
                 AllocationSource.setReverse(false);
                 log.warn("reverse stop , last_reverse_center : " + AllocationSource.getReverseCenter());
             } else if (hbCompareTo >= 0 && okCompareTo == -1) {//火币大于40% ok小于
-                if (!AllocationSource.getReverseCenter().equals(TradeCenter.okcoin.name())) {
-                    AllocationSource.setReverseCenter(TradeCenter.okcoin.name());
-                    log.warn("reverse_center update , now the reverse_center is " + TradeCenter.okcoin.name());
+                if (!AllocationSource.getReverseCenter().equals(TradeCenterEnum.okcoin.name())) {
+                    AllocationSource.setReverseCenter(TradeCenterEnum.okcoin.name());
+                    log.warn("reverse_center update , now the reverse_center is " + TradeCenterEnum.okcoin.name());
                 }
             } else if (hbCompareTo == -1 && okCompareTo >= 0) {//ok大于40% 火币小于
-                if (!AllocationSource.getReverseCenter().equals(TradeCenter.huobi.name())) {
-                    AllocationSource.setReverseCenter(TradeCenter.huobi.name());
-                    log.warn("reverse_center update , now the reverse_center is " + TradeCenter.huobi.name());
+                if (!AllocationSource.getReverseCenter().equals(TradeCenterEnum.huobi.name())) {
+                    AllocationSource.setReverseCenter(TradeCenterEnum.huobi.name());
+                    log.warn("reverse_center update , now the reverse_center is " + TradeCenterEnum.huobi.name());
                 }
             }
         } else {
@@ -94,13 +94,13 @@ public class AccountMonitor {
             int okCompareTo = freeCoinOk.compareTo(tempCoin);
 
             if (hbCompareTo == -1) {//火币持币小于总数的10%
-                AllocationSource.setReverseCenter(TradeCenter.huobi.name());
+                AllocationSource.setReverseCenter(TradeCenterEnum.huobi.name());
                 AllocationSource.setReverse(true);
-                log.warn("start reverse , the reverse_center is " + TradeCenter.huobi.name());
+                log.warn("start reverse , the reverse_center is " + TradeCenterEnum.huobi.name());
             } else if (okCompareTo == -1) {//ok持币小于总数10%
-                AllocationSource.setReverseCenter(TradeCenter.okcoin.name());
+                AllocationSource.setReverseCenter(TradeCenterEnum.okcoin.name());
                 AllocationSource.setReverse(true);
-                log.warn("start reverse , the reverse_center is " + TradeCenter.okcoin.name());
+                log.warn("start reverse , the reverse_center is " + TradeCenterEnum.okcoin.name());
             }
         }
     }

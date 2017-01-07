@@ -13,7 +13,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
  * Created by Miller on 2017/1/2.
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = "classpath*:spring/Application-context.xml")
+@ContextConfiguration(locations = "classpath*:spring/Application-context-test.xml")
 public class BaseTest {
     @Autowired
     private APIResultHandle resultHandle;
@@ -24,7 +24,7 @@ public class BaseTest {
 
     @Test
     public void testUserInfo() {
-//        System.out.println(resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin"));
-//        System.out.println(resultHandle.getNetAsset(huobiService.getAccountInfo(), "huobi"));
+        System.out.println(resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin"));
+        System.out.println(resultHandle.getNetAsset(huobiService.getAccountInfo(), "huobi"));
     }
 }

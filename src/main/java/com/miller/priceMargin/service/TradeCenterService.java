@@ -19,4 +19,12 @@ public interface TradeCenterService {
     void saveTradeCenter(TradeCenter tradeCenter);
 
     int updateAsset(String centerName, BigDecimal freeAmount, BigDecimal freeAsset);
+
+    void truncateTable();
+
+    BigDecimal getFreeAmount(String sellCenter);
+
+    BigDecimal getFreePrice(String buyCenter);
+
+    void updateNetAsset(BigDecimal netAsset, String centerName);
 }

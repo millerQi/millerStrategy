@@ -7,7 +7,8 @@ import com.miller.priceMargin.model.moreCenterPriceMargin.SystemAllocation;
  */
 public interface SystemAllocationService {
 
-    int updateSystemAllocation(SystemAllocation systemAllocation);
+    void saveSystemAllocation(SystemAllocation systemAllocation);
 
     SystemAllocation getSystemAllocation();
+
 }

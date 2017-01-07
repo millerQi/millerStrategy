@@ -60,4 +60,16 @@ public class SystemAllocation {
     public void setStrategyOpen(boolean strategyOpen) {
         this.strategyOpen = strategyOpen;
     }
+
+    @Override
+    public String toString() {
+        return "SystemAllocation{" +
+                "strategyOpen=" + strategyOpen +
+                ", reverseMultipleAmount=" + reverseMultipleAmount +
+                ", tickAmount=" + tickAmount +
+                ", reversePriceMargin=" + reversePriceMargin +
+                ", priceMargin=" + priceMargin +
+                ", coin=" + coin +
+                '}';
+    }
 }

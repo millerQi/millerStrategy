@@ -41,8 +41,35 @@ public class TradeCenterServiceImpl implements TradeCenterService {
         Assert.notNull(centerName, "center_name can not be null!");
         Assert.notNull(freeAmount, "free_amount can not be null!");
         Assert.notNull(freeAsset, "free_price can not be null!");
-        String sql = "update trade_center set free_amount = free_amount + ? ,free_asset = free_asset + ? where center_name = ?";
+        String sql = "update trade_center set free_amount =  ? ,free_asset =  ? where center_name = ?";
         return jdbcTemplate.update(sql, freeAmount, freeAsset, centerName);
     }
 
+    @Override
+    public void truncateTable() {
+        String dropTable = "TRUNCATE trade_center";
+        jdbcTemplate.execute(dropTable);
+    }
+
+    @Override
+    public BigDecimal getFreeAmount(String sellCenter) {
+        Assert.notNull(sellCenter, "sell_center can not be null!");
+        String sql = "select free_amount from trade_center where center_name = '" + sellCenter + "' limit 1";
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class);
+    }
+
+    @Override
+    public BigDecimal getFreePrice(String buyCenter) {
+        Assert.notNull(buyCenter, "buy_center can not be null!");
+        String sql = "select free_asset from trade_center where center_name = '" + buyCenter + "' limit 1";
+        return jdbcTemplate.queryForObject(sql, BigDecimal.class);
+    }
+
+    @Override
+    public void updateNetAsset(BigDecimal netAsset, String centerName) {
+        Assert.notNull(netAsset, "net_asset can not be null!");
+        Assert.notNull(centerName, "centerName can not be null!");
+        String sql = "update trade_center set net_asset = ? where center_name = ?";
+        jdbcTemplate.update(sql, netAsset, centerName);
+    }
 }

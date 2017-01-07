@@ -13,6 +13,15 @@ public class TradeCenter {
     private BigDecimal borrowAmount;
     private BigDecimal borrowPrice;
 
+    public TradeCenter(String centerName, BigDecimal netAsset, BigDecimal freeAsset, BigDecimal freeAmount, BigDecimal borrowAmount, BigDecimal borrowPrice) {
+        this.centerName = centerName;
+        this.netAsset = netAsset;
+        this.freeAsset = freeAsset;
+        this.freeAmount = freeAmount;
+        this.borrowAmount = borrowAmount;
+        this.borrowPrice = borrowPrice;
+    }
+
     public String getCenterName() {
         return centerName;
     }

@@ -11,7 +11,7 @@ public interface SystemStatusService {
     /**
      * 是否存在数据
      * 存在返回1
-     * 不存在返回-1
+     * 不存在返回0
      */
     int existData();
 
@@ -22,4 +22,6 @@ public interface SystemStatusService {
      * 失败 -1
      */
     int updateGains(BigDecimal gains, BigDecimal coinSellCount);
+
+    SystemStatus getSystemStatus();
 }

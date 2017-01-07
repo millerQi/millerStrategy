@@ -4,10 +4,13 @@ import com.miller.priceMargin.model.moreCenterPriceMargin.SystemStatus;
 import com.miller.priceMargin.service.SystemStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
  * Created by tonyqi on 17-1-6.
@@ -42,5 +45,22 @@ public class SystemStatusServiceImpl implements SystemStatusService {
         else
             sql.append(",loss_order_count = loss_order_count + 1");
         return jdbcTemplate.update(sql.toString(), gains, coinSellCount);
+    }
+
+    @Override
+    public SystemStatus getSystemStatus() {
+        String existSql = "select count(*) from system_status";
+        int ret = jdbcTemplate.queryForObject(existSql, Integer.class);
+        if (ret == 0)
+            return null;
+        String sql = "select * from system_status limit 1";
+        SystemStatus systemStatus = new SystemStatus();
+        jdbcTemplate.query(sql, resultSet -> {
+            systemStatus.setCoinSellCount(resultSet.getBigDecimal("coin_sell_count"));
+            systemStatus.setAllGains(resultSet.getBigDecimal("all_gains"));
+            systemStatus.setLossOrderCount(resultSet.getInt("loss_order_count"));
+            systemStatus.setGainsOrderCount(resultSet.getInt("gains_order_count"));
+        });
+        return systemStatus;
     }
 }

@@ -1,9 +1,14 @@
 package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
+import com.miller.priceMargin.enumUtil.TradeCenterEnum;
+import com.miller.priceMargin.model.moreCenterPriceMargin.OppositeOrder;
 import com.miller.priceMargin.model.order.OrderInfo;
 import com.miller.priceMargin.model.order.TradeInfo;
+import com.miller.priceMargin.model.order.UserInfo;
+import com.miller.priceMargin.service.OppositeOrderService;
+import com.miller.priceMargin.service.SystemStatusService;
+import com.miller.priceMargin.service.TradeCenterService;
 import com.miller.priceMargin.util.APIResultHandle;
-import com.miller.priceMargin.service.PriceMarginService;
 import com.miller.priceMargin.tradeCenter.CommonTradeService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
@@ -32,7 +37,11 @@ public class TradeService {
     @Autowired
     private OkcoinService okcoinService;
     @Autowired
-    private PriceMarginService priceMarginService;
+    private TradeCenterService tradeCenterService;
+    @Autowired
+    private OppositeOrderService oppositeOrderService;
+    @Autowired
+    private SystemStatusService systemStatusService;
 
     private Log log = LogFactory.getLog(TradeService.class);
 
@@ -46,18 +55,23 @@ public class TradeService {
                     + " , buy_center :" + buyCenter + " ,buy_amount :" + buyAmount);
             return false;
         }
-        AllocationSource.addFreeAmount(sellCenter, coin, sellAmount.subtract(BigDecimal.valueOf(2).multiply(sellAmount)));
-
         TradeInfo buyInfo = commonTradeService.trade(buyCenter, buyPrice, buyAmount, "buy", coin);
         if (buyInfo == null) {
-            //// TODO: 17-1-5 平卖出成功部分
-            log.error("sell order complete , but buy order failed , sell_center :" + sellCenter + " , sell_amount " + sellAmount
+            //平仓
+            closeout(false, sellAmount, sellInfo.getOrderId());
+            log.error("sell order complete , but buy order failed ，start closeout , sell_center :" + sellCenter + " , sell_amount " + sellAmount
                     + " , buy_center :" + buyCenter + " ,buy_amount :" + buyAmount);
             return false;
         }
-        AllocationSource.addFreeAmount(buyCenter, coin, buyAmount);
         pool.execute(() -> reckonGains(sellInfo.getOrderId(), sellCenter, buyInfo.getOrderId(), buyCenter, coin, isReverse));
         return true;
+    }
+
+    private void closeout(boolean closeoutBuy, BigDecimal amount, Long TID) {//// TODO: 2017/1/7 平仓完毕，调用reckonGains
+        String direction = "buy";
+        if (closeoutBuy)
+            direction = "sell";
+
     }
 
     private void reckonGains(long sellTID, String sellCenter, long buyTID, String buyCenter, int coin, boolean isReverse) {
@@ -73,7 +87,7 @@ public class TradeService {
             if (sellOrderInfo == null || buyOrderInfo == null) {
                 if (count > 20) {
                     log.error("订单详情调用失败，数据库订单少记录一笔！sellTID = " + sellTID + ",buyTID = " + buyTID);
-                    updateLastPrice();//修改最新净资产 // TODO: 17-1-5需要修改统一
+                    updateLastPrice();//修改最新净资产
                     return;
                 }
                 continue;
@@ -87,37 +101,44 @@ public class TradeService {
                     || buyDeal.compareTo(buyOrderInfo.getAmount()) == -1) {
                 if (count > 20) {
                     log.error("订单详情调用失败或没有完全成交，数据库订单少记录一笔！sellTID = " + sellTID + ",buyTID = " + buyTID);
-                    updateLastPrice();//修改最新净资产 // TODO: 17-1-5需要修改统一
+                    updateLastPrice();//修改最新净资产
                     return;
                 }
             } else
                 flag = false;
         }
-        updateLastPrice();//修改最新净资产 TODO: 17-1-5需要修改统一
+        updateLastPrice();//修改最新净资产
         BigDecimal sellAvgPrice = sellOrderInfo.getAvgPrice();
         BigDecimal buyAvgPrice = buyOrderInfo.getAvgPrice();
         BigDecimal dealGains = sellAvgPrice.subtract(buyAvgPrice);
-        String head = "";
-        if (isReverse)
-            head = "| Reverse order ! | ";
-        // TODO: 17-1-5 记录订单
-        priceMarginService.addGains(dealGains);
-        String msg = head + "| sell_avg_price | " + sellAvgPrice + " | buy_avg_price | " + buyAvgPrice + " | amount | " + sellOrderInfo.getAmount() + " | gains | " + dealGains + " | all_gains | " + priceMarginService.getGains() + " |";
-        if (dealGains.compareTo(BigDecimal.ZERO) >= 0) {
-            AllocationSource.gainsOrderCount++;
-            log.info("start_time :" + AllocationSource.startTime);
-            log.info(msg + " gains_order_count | " + AllocationSource.gainsOrderCount + " | " + " no_gains_order_count | " + AllocationSource.noGainsOrderCount + " | no_gains | " + AllocationSource.noGains + " |");
-        } else {
-            AllocationSource.noGainsOrderCount++;
-            AllocationSource.noGains = AllocationSource.noGains.add(dealGains);
-            log.info("start_time :" + AllocationSource.startTime);
-            log.error(msg + " gains_order_count | " + AllocationSource.gainsOrderCount + " | " + " no_gains_order_count | " + AllocationSource.noGainsOrderCount + " | no_gains | " + AllocationSource.noGains + " |");
-        }
+        BigDecimal sellAmount = sellOrderInfo.getAmount();
+        OppositeOrder oppositeOrder = new OppositeOrder();
+        oppositeOrder.setGains(dealGains);
+        oppositeOrder.setSellCenter(sellCenter);
+        oppositeOrder.setSellAmount(sellAmount);
+        oppositeOrder.setSellAvgPrice(sellAvgPrice);
+        oppositeOrder.setBuyCenter(buyCenter);
+        oppositeOrder.setBuyAmount(buyOrderInfo.getAmount());
+        oppositeOrder.setBuyAvgPrice(buyAvgPrice);
+        oppositeOrderService.saveOppositeOrder(oppositeOrder);
+        int ret = systemStatusService.updateGains(dealGains, sellAmount);
+        if (ret != 1)
+            log.error("gains 修改失败!dealGains:" + dealGains + ",sellAmount:" + sellAmount);
     }
 
     private void updateLastPrice() {
-        BigDecimal okNetAsset = resultHandle.getNetAsset(okcoinService.userinfo(), "okcoin");
-        BigDecimal hbNetAsset = resultHandle.getNetAsset(huobiApi.getAccountInfo(), "huobi");
-        priceMarginService.updateLastPrice(okNetAsset, hbNetAsset);
+        UserInfo okUserInfo = resultHandle.getUserInfo(okcoinService.userinfo(), TradeCenterEnum.okcoin.name());
+        UserInfo hbUserInfo = resultHandle.getUserInfo(huobiApi.getAccountInfo(), TradeCenterEnum.huobi.name());
+        int coin = AllocationSource.coin;
+        BigDecimal okFreeAmount, hbFreeAmount;
+        if (coin == 1) {
+            okFreeAmount = okUserInfo.getFreeBTC();
+            hbFreeAmount = hbUserInfo.getFreeBTC();
+        } else {
+            okFreeAmount = okUserInfo.getFreeLTC();
+            hbFreeAmount = hbUserInfo.getFreeLTC();
+        }
+        tradeCenterService.updateAsset(TradeCenterEnum.okcoin.name(), okFreeAmount, okUserInfo.getFreeCny());
+        tradeCenterService.updateAsset(TradeCenterEnum.huobi.name(), hbFreeAmount, hbUserInfo.getFreeCny());
     }
 }

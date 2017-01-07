@@ -10,8 +10,6 @@ public class SystemStatus {
     private BigDecimal coinSellCount;
     private int gainsOrderCount;
     private int lossOrderCount;
-    private boolean reloadAllocation;
-    private boolean synchroAllocation;
 
     public BigDecimal getAllGains() {
         return allGains;
@@ -45,19 +43,4 @@ public class SystemStatus {
         this.lossOrderCount = lossOrderCount;
     }
 
-    public boolean isReloadAllocation() {
-        return reloadAllocation;
-    }
-
-    public void setReloadAllocation(boolean reloadAllocation) {
-        this.reloadAllocation = reloadAllocation;
-    }
-
-    public boolean isSynchroAllocation() {
-        return synchroAllocation;
-    }
-
-    public void setSynchroAllocation(boolean synchroAllocation) {
-        this.synchroAllocation = synchroAllocation;
-    }
 }

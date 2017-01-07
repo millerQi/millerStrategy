@@ -28,9 +28,7 @@ CREATE TABLE `system_status` (
   `all_gains` decimal(10,4) DEFAULT NULL,
   `coin_sell_count` decimal(12,4) DEFAULT NULL,
   `gains_order_count` int(7) DEFAULT NULL,
-  `loss_order_count` int(7) DEFAULT NULL,
-  `reload_allocation` bit(1) DEFAULT b'0',
-  `synchro_allocation` bit(1) DEFAULT b'0'
+  `loss_order_count` int(7) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 
 CREATE TABLE `trade_center` (
