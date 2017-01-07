@@ -49,7 +49,7 @@ public class MoreCenterPriceMargin {
     /*价差上升百分比系数*/
     private BigDecimal percent = BigDecimal.valueOf(1.1);
 
-    public static SystemAllocation systemAllocation;
+    static SystemAllocation systemAllocation;
 
     public void startStrategy() {
         /**初始化系统配置**/
@@ -174,9 +174,6 @@ public class MoreCenterPriceMargin {
 
     /**
      * 下单，下单完成则返回true,否则返回false
-     *
-     * @param map
-     * @return
      */
     private boolean orderMethod(Map<String, Object> map) {
         String sellCenter = StringUtil.getString(map.get("sellCenter"));
