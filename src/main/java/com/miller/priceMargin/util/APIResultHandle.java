@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 
 /**
@@ -34,6 +35,12 @@ public class APIResultHandle {
         } else if (center.equals(TradeCenterEnum.huobi.name())) {
             Long id = object.getLong("id");
             if (id == null) {
+                try {
+                    byte[] bytes = result.getBytes("utf-8");
+                    result = new String(bytes);
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
                 log.error("Trade failed :" + result);
                 return null;
             }

@@ -72,4 +72,31 @@ public class SystemAllocation {
                 ", coin=" + coin +
                 '}';
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SystemAllocation that = (SystemAllocation) o;
+
+        if (coin != that.coin) return false;
+        if (Float.compare(that.reverseMultipleAmount, reverseMultipleAmount) != 0) return false;
+        if (strategyOpen != that.strategyOpen) return false;
+        if (!priceMargin.equals(that.priceMargin)) return false;
+        if (!reversePriceMargin.equals(that.reversePriceMargin)) return false;
+        return tickAmount.equals(that.tickAmount);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = coin;
+        result = 31 * result + priceMargin.hashCode();
+        result = 31 * result + reversePriceMargin.hashCode();
+        result = 31 * result + tickAmount.hashCode();
+        result = 31 * result + (reverseMultipleAmount != +0.0f ? Float.floatToIntBits(reverseMultipleAmount) : 0);
+        result = 31 * result + (strategyOpen ? 1 : 0);
+        return result;
+    }
 }

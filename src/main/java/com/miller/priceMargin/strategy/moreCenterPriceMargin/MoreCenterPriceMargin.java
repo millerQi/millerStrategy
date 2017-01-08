@@ -8,9 +8,9 @@ import com.miller.priceMargin.model.order.UserInfo;
 import com.miller.priceMargin.service.SystemAllocationService;
 import com.miller.priceMargin.service.SystemStatusService;
 import com.miller.priceMargin.service.TradeCenterService;
-import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
+import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.util.CommonUtil;
 import com.miller.priceMargin.util.StringUtil;
 import org.apache.commons.logging.Log;
@@ -79,13 +79,16 @@ public class MoreCenterPriceMargin {
     }
 
     private void pretreatment() {
-        systemAllocation = systemAllocationService.getSystemAllocation();
+        SystemAllocation systemAllocation = systemAllocationService.getSystemAllocation();
+        if (MoreCenterPriceMargin.systemAllocation == null)
+            MoreCenterPriceMargin.systemAllocation = systemAllocation;
+        else if (!MoreCenterPriceMargin.systemAllocation.equals(systemAllocation))
+            log.info("system allocation change ! reload again ! ");
         if (!systemAllocation.isStrategyOpen()) {
             log.warn("system exit by user!");
             System.exit(0);
         }
         AllocationSource.coin = systemAllocation.getCoin();
-        log.info("pretreatment complete");
     }
 
     private void initSystemStatus() {
@@ -157,7 +160,7 @@ public class MoreCenterPriceMargin {
         BigDecimal reverseBuyAmount = (BigDecimal) map.get("reverseBuyAmount");
 
         /*迁移头寸是套利下单头寸的2倍*/
-        BigDecimal tickerAmount = systemAllocation.getTickAmount().multiply(BigDecimal.valueOf(systemAllocation.getReverseMultipleAmount()));
+        BigDecimal tickerAmount = systemAllocation.getTickAmount().multiply(BigDecimal.valueOf(systemAllocation.getReverseMultipleAmount())).setScale(2, BigDecimal.ROUND_DOWN);
         /**check depth amount**/
         if (tickerAmount.compareTo(reverseBuyAmount) == 1
                 || tickerAmount.compareTo(reverseSellAmount) == 1)
@@ -185,13 +188,13 @@ public class MoreCenterPriceMargin {
         BigDecimal tickAmount = systemAllocation.getTickAmount();
         /**check depth amount**/
         if (tickAmount.compareTo(buyAmount) == 1
-                || tickAmount.compareTo(sellAmount) == 1)
+                || tickAmount.compareTo(sellAmount) == 1) {
+            log.warn("depth's amount is not enough!");
             return false;
-
+        }
         /**check freeAmount and freePrice**/
         if (!validateFree(sellCenter, buyCenter, buyPrice, tickAmount))
             return false;
-
         /**trade**/
         return tradeService.trade(sellCenter, buyCenter, sellPrice, buyPrice, tickAmount, tickAmount, AllocationSource.coin, false);
     }
@@ -200,9 +203,16 @@ public class MoreCenterPriceMargin {
         BigDecimal freeAmount = tradeCenterService.getFreeAmount(sellCenter);
         BigDecimal freePrice = tradeCenterService.getFreePrice(buyCenter);
         /**check free_amount**/
-        if (tickerAmount.compareTo(freeAmount) == 1)
+        if (tickerAmount.compareTo(freeAmount) == 1) {
+            log.warn("free amount is not enough , tick_amount :" + tickerAmount + ", free_amount:" + freeAmount);
             return false;
+        }
         /**check free_price**/
-        return buyPrice.multiply(tickerAmount).compareTo(freePrice) == -1;
+        BigDecimal tick_price;
+        if ((tick_price = buyPrice.multiply(tickerAmount)).compareTo(freePrice) == 1) {
+            log.info("free price is not enough , tick_price :" + tick_price + ", free_price:" + freePrice);
+            return false;
+        }
+        return true;
     }
 }

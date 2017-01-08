@@ -49,13 +49,13 @@ public class TradeService {
 
     boolean trade(String sellCenter, String buyCenter, BigDecimal sellPrice, BigDecimal buyPrice,
                   BigDecimal sellAmount, BigDecimal buyAmount, int coin, boolean isReverse) {
-        TradeInfo sellInfo = commonTradeService.trade(sellCenter, sellPrice, sellAmount, "sell", coin);
+        TradeInfo sellInfo = commonTradeService.trade(sellCenter, sellPrice.setScale(2, BigDecimal.ROUND_DOWN), sellAmount = sellAmount.setScale(2, BigDecimal.ROUND_DOWN), "sell", coin);
         if (sellInfo == null) {
             log.error("sell order failed! sell_center :" + sellCenter + " , sell_amount " + sellAmount
                     + " , buy_center :" + buyCenter + " ,buy_amount :" + buyAmount);
             return false;
         }
-        TradeInfo buyInfo = commonTradeService.trade(buyCenter, buyPrice, buyAmount, "buy", coin);
+        TradeInfo buyInfo = commonTradeService.trade(buyCenter, buyPrice.setScale(2, BigDecimal.ROUND_DOWN), buyAmount = buyAmount.setScale(2, BigDecimal.ROUND_DOWN), "buy", coin);
         if (buyInfo == null) {
             //平仓
             closeout(false, sellAmount, sellInfo.getOrderId());
@@ -63,7 +63,7 @@ public class TradeService {
                     + " , buy_center :" + buyCenter + " ,buy_amount :" + buyAmount);
             return false;
         }
-        pool.execute(() -> reckonGains(sellInfo.getOrderId(), sellCenter, buyInfo.getOrderId(), buyCenter, coin, isReverse));
+        pool.execute(() -> reckonGains(sellInfo.getOrderId(), sellCenter, buyInfo.getOrderId(), buyCenter, coin));
         return true;
     }
 
@@ -74,7 +74,7 @@ public class TradeService {
 
     }
 
-    private void reckonGains(long sellTID, String sellCenter, long buyTID, String buyCenter, int coin, boolean isReverse) {
+    private void reckonGains(long sellTID, String sellCenter, long buyTID, String buyCenter, int coin) {
         boolean flag = true;
         int count = 0;
         OrderInfo sellOrderInfo = null;
@@ -107,11 +107,11 @@ public class TradeService {
             } else
                 flag = false;
         }
-        updateLastPrice();//修改最新净资产
         BigDecimal sellAvgPrice = sellOrderInfo.getAvgPrice();
         BigDecimal buyAvgPrice = buyOrderInfo.getAvgPrice();
         BigDecimal dealGains = sellAvgPrice.subtract(buyAvgPrice);
         BigDecimal sellAmount = sellOrderInfo.getAmount();
+        updateLastPrice(sellOrderInfo.getDealAmount(), buyOrderInfo.getDealAmount(), sellCenter, buyCenter, sellAvgPrice, buyAvgPrice);//修改最新净资产
         OppositeOrder oppositeOrder = new OppositeOrder();
         oppositeOrder.setGains(dealGains);
         oppositeOrder.setSellCenter(sellCenter);
@@ -124,6 +124,7 @@ public class TradeService {
         int ret = systemStatusService.updateGains(dealGains, sellAmount);
         if (ret != 1)
             log.error("gains 修改失败!dealGains:" + dealGains + ",sellAmount:" + sellAmount);
+        log.info("trade complete ! | trade_amount | " + sellAmount + " | " + "buy_avg_price | " + buyAvgPrice + " | sell_avg_price | " + sellAvgPrice + " | gains | " + dealGains + " |");
     }
 
     private void updateLastPrice() {
@@ -140,5 +141,11 @@ public class TradeService {
         }
         tradeCenterService.updateAsset(TradeCenterEnum.okcoin.name(), okFreeAmount, okUserInfo.getFreeCny());
         tradeCenterService.updateAsset(TradeCenterEnum.huobi.name(), hbFreeAmount, hbUserInfo.getFreeCny());
+    }
+
+    private void updateLastPrice(BigDecimal sellAmount, BigDecimal buyAmount, String sellCenter, String buyCenter, BigDecimal sellAvgPrice, BigDecimal buyAvgPrice) {
+        tradeCenterService.updateAmount(sellCenter, sellAmount.subtract(sellAmount.multiply(BigDecimal.valueOf(2))), sellAmount.multiply(sellAvgPrice));
+        BigDecimal costPrice = buyAmount.multiply(buyAvgPrice);
+        tradeCenterService.updateAmount(buyCenter, buyAmount, buyAmount.multiply(costPrice.subtract(costPrice.multiply(BigDecimal.valueOf(2)))));
     }
 }

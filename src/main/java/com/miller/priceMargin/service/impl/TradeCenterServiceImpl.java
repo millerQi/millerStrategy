@@ -72,4 +72,13 @@ public class TradeCenterServiceImpl implements TradeCenterService {
         String sql = "update trade_center set net_asset = ? where center_name = ?";
         jdbcTemplate.update(sql, netAsset, centerName);
     }
+
+    @Override
+    public void updateAmount(String center, BigDecimal freePrice, BigDecimal amount) {
+        Assert.notNull(center, "center can not be null!");
+        Assert.notNull(freePrice, "freePrice can not be null!");
+        Assert.notNull(amount, "amount can not be null!");
+        String sql = "update trade_center set free_asset = free_asset+?,free_amount = free_amount+? where center_name=?";
+        jdbcTemplate.update(sql, freePrice, amount, center);
+    }
 }

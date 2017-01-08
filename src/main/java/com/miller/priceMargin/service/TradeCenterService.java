@@ -27,4 +27,13 @@ public interface TradeCenterService {
     BigDecimal getFreePrice(String buyCenter);
 
     void updateNetAsset(BigDecimal netAsset, String centerName);
+
+    /**
+     * 增加或减少
+     *
+     * @param center
+     * @param freePrice
+     * @param amount
+     */
+    void updateAmount(String center, BigDecimal freePrice, BigDecimal amount);
 }
