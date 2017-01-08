@@ -144,8 +144,8 @@ public class TradeService {
     }
 
     private void updateLastPrice(BigDecimal sellAmount, BigDecimal buyAmount, String sellCenter, String buyCenter, BigDecimal sellAvgPrice, BigDecimal buyAvgPrice) {
-        tradeCenterService.updateAmount(sellCenter, sellAmount.subtract(sellAmount.multiply(BigDecimal.valueOf(2))), sellAmount.multiply(sellAvgPrice));
+        tradeCenterService.updateAmount(sellCenter, sellAmount.multiply(sellAvgPrice), sellAmount.subtract(sellAmount.multiply(BigDecimal.valueOf(2))));
         BigDecimal costPrice = buyAmount.multiply(buyAvgPrice);
-        tradeCenterService.updateAmount(buyCenter, buyAmount, buyAmount.multiply(costPrice.subtract(costPrice.multiply(BigDecimal.valueOf(2)))));
+        tradeCenterService.updateAmount(buyCenter, costPrice.subtract(costPrice.multiply(BigDecimal.valueOf(2))), buyAmount);
     }
 }

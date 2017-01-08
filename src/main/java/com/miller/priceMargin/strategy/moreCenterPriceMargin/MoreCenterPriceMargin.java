@@ -82,8 +82,10 @@ public class MoreCenterPriceMargin {
         SystemAllocation systemAllocation = systemAllocationService.getSystemAllocation();
         if (MoreCenterPriceMargin.systemAllocation == null)
             MoreCenterPriceMargin.systemAllocation = systemAllocation;
-        else if (!MoreCenterPriceMargin.systemAllocation.equals(systemAllocation))
+        else if (!MoreCenterPriceMargin.systemAllocation.equals(systemAllocation)) {
             log.info("system allocation change ! reload again ! ");
+            MoreCenterPriceMargin.systemAllocation = systemAllocation;
+        }
         if (!systemAllocation.isStrategyOpen()) {
             log.warn("system exit by user!");
             System.exit(0);
@@ -204,13 +206,13 @@ public class MoreCenterPriceMargin {
         BigDecimal freePrice = tradeCenterService.getFreePrice(buyCenter);
         /**check free_amount**/
         if (tickerAmount.compareTo(freeAmount) == 1) {
-            log.warn("free amount is not enough , tick_amount :" + tickerAmount + ", free_amount:" + freeAmount);
+//            log.warn("free amount is not enough , tick_amount :" + tickerAmount + ", free_amount:" + freeAmount);
             return false;
         }
         /**check free_price**/
         BigDecimal tick_price;
         if ((tick_price = buyPrice.multiply(tickerAmount)).compareTo(freePrice) == 1) {
-            log.info("free price is not enough , tick_price :" + tick_price + ", free_price:" + freePrice);
+//            log.info("free price is not enough , tick_price :" + tick_price + ", free_price:" + freePrice);
             return false;
         }
         return true;
