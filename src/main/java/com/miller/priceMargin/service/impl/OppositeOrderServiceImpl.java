@@ -17,7 +17,7 @@ public class OppositeOrderServiceImpl implements OppositeOrderService {
 
     @Override
     public void saveOppositeOrder(OppositeOrder oppositeOrder) {
-        String sql = "INSERT INTO oppsite_order (sell_center, sell_avg_price, sell_amount, buy_center, buy_avg_price, buy_amount, gains, create_time) VALUES (?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO opposite_order (sell_center, sell_avg_price, sell_amount, buy_center, buy_avg_price, buy_amount, gains, create_time) VALUES (?,?,?,?,?,?,?,?)";
         jdbcTemplate.update(sql, oppositeOrder.getSellCenter(), oppositeOrder.getSellAvgPrice(), oppositeOrder.getSellAmount(),
                 oppositeOrder.getBuyCenter(), oppositeOrder.getBuyAvgPrice(), oppositeOrder.getBuyAmount(), oppositeOrder.getGains(), DateUtil.getTimestamp());
     }

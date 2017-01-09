@@ -3,7 +3,7 @@ CREATE TABLE `log_info` (
   `warn` bit(1) DEFAULT b'0'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1
 
-CREATE TABLE `oppsite_order` (
+CREATE TABLE `opposite_order` (
   `sell_center` varchar(7) DEFAULT NULL,
   `sell_avg_price` decimal(7,2) DEFAULT NULL,
   `sell_amount` decimal(7,2) DEFAULT NULL,
