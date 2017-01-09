@@ -78,13 +78,11 @@ public class DepthDataSource {
 
         String targetCenter;
         if (!StringUtil.isEmpty(targetCenter = isReverse())) {
-            BigDecimal hbS = hbSellPM.abs();
-            BigDecimal okS = okSellPM.abs();
             BigDecimal reversePriceMargin = MoreCenterPriceMargin.systemAllocation.getReversePriceMargin();
             /**满足迁移条件**/
-            if (targetCenter.equals(TradeCenterEnum.okcoin.name()) && hbS.compareTo(reversePriceMargin) <= 0)
+            if (targetCenter.equals(TradeCenterEnum.okcoin.name()) && hbSellPM.compareTo(reversePriceMargin) >= 0)
                 packageReverse(map, TradeCenterEnum.huobi.name(), TradeCenterEnum.okcoin.name(), hbBidPrice, okAskPrice, hbBidAmount, okAskAmount);
-            else if (targetCenter.equals(TradeCenterEnum.huobi.name()) && okS.compareTo(reversePriceMargin) <= 0)
+            else if (targetCenter.equals(TradeCenterEnum.huobi.name()) && okSellPM.compareTo(reversePriceMargin) >= 0)
                 packageReverse(map, TradeCenterEnum.okcoin.name(), TradeCenterEnum.huobi.name(), okBidPrice, hbAskPrice, okBidAmount, hbAskAmount);
         }
         /**火币sell - ok buy 》= 盈利价差**/
