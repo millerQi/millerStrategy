@@ -19,6 +19,7 @@ public class URLUtil {
 
     private static Log log = LogFactory.getLog(URLUtil.class);
 
+
     public static String doGet(String url, Map<String, String> params) {
         String result = "";
         BufferedReader in = null;
