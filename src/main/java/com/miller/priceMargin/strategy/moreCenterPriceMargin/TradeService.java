@@ -127,8 +127,8 @@ public class TradeService {
         if (ret != 1)
             log.error("gains 修改失败!dealGains:" + dealGains + ",sellAmount:" + sellAmount);
         String msg = "Trade complete !\n"
-                + "sell_center" + sellCenter + "\n"
-                + "buy_center" + buyCenter + "\n"
+                + "sell_center : " + sellCenter + "\n"
+                + "buy_center : " + buyCenter + "\n"
                 + "trade_amount : " + sellAmount + "\n"
                 + "buy_avg_price : " + buyAvgPrice + "\n"
                 + "sell_avg_price : " + sellAvgPrice + "\n"
