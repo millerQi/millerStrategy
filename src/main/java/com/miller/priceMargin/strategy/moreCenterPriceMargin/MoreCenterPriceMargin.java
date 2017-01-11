@@ -13,6 +13,7 @@ import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
 import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.util.CommonUtil;
 import com.miller.priceMargin.util.StringUtil;
+import com.miller.priceMargin.weChat.WeChatSendMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,7 @@ public class MoreCenterPriceMargin {
     static SystemAllocation systemAllocation;
 
     public void startStrategy() {
+        WeChatSendMessage.sendMsg("price_margin system start!");
         /**初始化系统配置**/
         initSystemAllocation();
 
@@ -82,6 +84,7 @@ public class MoreCenterPriceMargin {
             MoreCenterPriceMargin.systemAllocation = systemAllocation;
         else if (!MoreCenterPriceMargin.systemAllocation.equals(systemAllocation)) {
             log.info("system allocation change ! reload again ! ");
+            WeChatSendMessage.sendMsg("system allocation change ! reload again ! \n" + systemAllocation.toString());
             MoreCenterPriceMargin.systemAllocation = systemAllocation;
         }
         if (!systemAllocation.isStrategyOpen()) {

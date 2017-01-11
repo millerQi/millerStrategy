@@ -13,6 +13,7 @@ import com.miller.priceMargin.tradeCenter.CommonTradeService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
 import com.miller.priceMargin.util.CommonUtil;
+import com.miller.priceMargin.weChat.WeChatSendMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,10 +69,10 @@ public class TradeService {
     }
 
     private void closeout(boolean closeoutBuy, BigDecimal amount, Long TID) {//// TODO: 2017/1/7 平仓完毕，调用reckonGains
-        String direction = "buy";
-        if (closeoutBuy)
-            direction = "sell";
-
+//        String direction = "buy";
+//        if (closeoutBuy)
+//            direction = "sell";
+        WeChatSendMessage.sendMsg("sell success , buy error , system exit!");
     }
 
     private void reckonGains(long sellTID, String sellCenter, long buyTID, String buyCenter, int coin) {
@@ -124,7 +125,15 @@ public class TradeService {
         int ret = systemStatusService.updateGains(dealGains, sellAmount);
         if (ret != 1)
             log.error("gains 修改失败!dealGains:" + dealGains + ",sellAmount:" + sellAmount);
-        log.info("trade complete ! | trade_amount | " + sellAmount + " | " + "buy_avg_price | " + buyAvgPrice + " | sell_avg_price | " + sellAvgPrice + " | gains | " + dealGains + " |");
+        String msg = "Trade complete !\n"
+                + "sell_center" + sellCenter + "\n"
+                + "buy_center" + buyCenter + "\n"
+                + "trade_amount : " + sellAmount + "\n"
+                + "buy_avg_price : " + buyAvgPrice + "\n"
+                + "sell_avg_price : " + sellAvgPrice + "\n"
+                + "gains : " + dealGains + "\n";
+        WeChatSendMessage.sendMsg(msg);
+//        log.info("trade complete ! | trade_amount | " + sellAmount + " | " + "buy_avg_price | " + buyAvgPrice + " | sell_avg_price | " + sellAvgPrice + " | gains | " + dealGains + " |");
     }
 
     private void updateLastPrice() {

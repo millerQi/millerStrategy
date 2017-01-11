@@ -63,14 +63,12 @@ public class SystemAllocation {
 
     @Override
     public String toString() {
-        return "SystemAllocation{" +
-                "strategyOpen=" + strategyOpen +
+        return "strategyOpen=" + strategyOpen +
                 ", reverseMultipleAmount=" + reverseMultipleAmount +
                 ", tickAmount=" + tickAmount +
                 ", reversePriceMargin=" + reversePriceMargin +
                 ", priceMargin=" + priceMargin +
-                ", coin=" + coin +
-                '}';
+                ", coin=" + coin;
     }
 
     @Override

@@ -1,8 +1,11 @@
 package com.miller.priceMargin.strategy.moreCenterPriceMargin;
 
 import com.miller.priceMargin.enumUtil.TradeCenterEnum;
+import com.miller.priceMargin.model.moreCenterPriceMargin.SystemStatus;
+import com.miller.priceMargin.service.SystemStatusService;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.util.StringUtil;
+import com.miller.priceMargin.weChat.WeChatSendMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,8 @@ import java.util.Map;
 public class DepthDataSource {
     @Autowired
     private HuobiService huobiApi;
+    @Autowired
+    private SystemStatusService systemStatusService;
 
     private Log log = LogFactory.getLog(DepthDataSource.class);
 
@@ -94,6 +99,9 @@ public class DepthDataSource {
         long timeNow;
         if ((timeNow = System.currentTimeMillis()) - lastWarnTime > 300000) {//5分钟心跳一次
             log.info("pong!");
+            SystemStatus systemStatus = systemStatusService.getSystemStatus();
+            WeChatSendMessage.sendMsg("pong ! \nall_agins:" + systemStatus.getAllGains() + "\ngains_order_count:"
+                    + systemStatus.getGainsOrderCount() + "\nloss_order_count:" + systemStatus.getLossOrderCount() + "\ncoin_sell_count:" + systemStatus.getCoinSellCount());
             lastWarnTime = timeNow;
         }
         return map;

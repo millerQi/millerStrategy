@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.miller.priceMargin.strategy.moreCenterPriceMargin.AllocationSource;
 import com.miller.priceMargin.util.StringUtil;
 import com.miller.priceMargin.util.URLUtil;
+import com.miller.priceMargin.weChat.WeChatSendMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.stereotype.Component;
@@ -287,9 +288,11 @@ public class HuobiService extends Base {
         String okRet = URLUtil.doGet(okDepthUrl, null);
         if (StringUtil.isEmpty(ret)) {
             log.error("huobi 's depth get error!");
+            WeChatSendMessage.sendMsg("huobi 's depth get error!");
             return null;
         } else if (StringUtil.isEmpty(ret)) {
             log.error("okcoin 's depth get error!");
+            WeChatSendMessage.sendMsg("okcoin 's depth get error!");
             return null;
         }
         JSONObject object = JSON.parseObject(ret);

@@ -5,6 +5,7 @@ import com.miller.priceMargin.model.order.UserInfo;
 import com.miller.priceMargin.util.APIResultHandle;
 import com.miller.priceMargin.tradeCenter.huobi.HuobiService;
 import com.miller.priceMargin.tradeCenter.okcoin.OkcoinService;
+import com.miller.priceMargin.weChat.WeChatSendMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,10 +47,12 @@ public class AccountMonitor {
         UserInfo huobiUserInfo = apiResultHandle.getUserInfo(huobiService.getAccountInfo(), TradeCenterEnum.huobi.name());
         if (okcoinUserInfo == null) {
             log.error("account_monitor okcoin get user_info error");
+            WeChatSendMessage.sendMsg("account_monitor okcoin get user_info error");
             return;
         }
         if (huobiUserInfo == null) {
             log.error("account_monitor huobi get user_info error");
+            WeChatSendMessage.sendMsg("account_monitor huobi get user_info error");
             return;
         }
 
