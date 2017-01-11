@@ -46,9 +46,6 @@ public class MoreCenterPriceMargin {
 
     private Log log = LogFactory.getLog(MoreCenterPriceMargin.class);
 
-    /*价差上升百分比系数*/
-    private BigDecimal percent = BigDecimal.valueOf(1.1);
-
     static SystemAllocation systemAllocation;
 
     public void startStrategy() {
@@ -161,7 +158,6 @@ public class MoreCenterPriceMargin {
         BigDecimal reverseSellAmount = (BigDecimal) map.get("reverseSellAmount");
         BigDecimal reverseBuyAmount = (BigDecimal) map.get("reverseBuyAmount");
 
-        /*迁移头寸是套利下单头寸的2倍*/
         BigDecimal tickerAmount = systemAllocation.getTickAmount().multiply(BigDecimal.valueOf(systemAllocation.getReverseMultipleAmount())).setScale(2, BigDecimal.ROUND_DOWN);
         /**check depth amount**/
         if (tickerAmount.compareTo(reverseBuyAmount) == 1
@@ -210,11 +206,8 @@ public class MoreCenterPriceMargin {
             return false;
         }
         /**check free_price**/
-        BigDecimal tick_price;
-        if ((tick_price = buyPrice.multiply(tickerAmount)).compareTo(freePrice) == 1) {
-//            log.info("free price is not enough , tick_price :" + tick_price + ", free_price:" + freePrice);
+        if (buyPrice.multiply(tickerAmount).compareTo(freePrice) == 1)
             return false;
-        }
         return true;
     }
 }
