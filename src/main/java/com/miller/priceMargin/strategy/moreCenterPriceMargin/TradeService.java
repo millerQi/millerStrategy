@@ -73,6 +73,7 @@ public class TradeService {
 //        if (closeoutBuy)
 //            direction = "sell";
         WeChatSendMessage.sendMsg("sell success , buy error , system exit!");
+        System.exit(0);
     }
 
     private void reckonGains(long sellTID, String sellCenter, long buyTID, String buyCenter, int coin) {
@@ -133,7 +134,7 @@ public class TradeService {
                 + "sell_avg_price : " + sellAvgPrice + "\n"
                 + "gains : " + dealGains + "\n";
         WeChatSendMessage.sendMsg(msg);
-//        log.info("trade complete ! | trade_amount | " + sellAmount + " | " + "buy_avg_price | " + buyAvgPrice + " | sell_avg_price | " + sellAvgPrice + " | gains | " + dealGains + " |");
+        log.info("trade complete ! | trade_amount | " + sellAmount + " | " + "buy_avg_price | " + buyAvgPrice + " | sell_avg_price | " + sellAvgPrice + " | gains | " + dealGains + " |");
     }
 
     private void updateLastPrice() {
