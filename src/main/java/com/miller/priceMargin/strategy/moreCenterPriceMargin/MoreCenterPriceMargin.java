@@ -46,6 +46,7 @@ public class MoreCenterPriceMargin {
 
     private Log log = LogFactory.getLog(MoreCenterPriceMargin.class);
 
+    /*系统配置*/
     static SystemAllocation systemAllocation;
 
     public void startStrategy() {
@@ -106,10 +107,10 @@ public class MoreCenterPriceMargin {
         if (systemAllocationService.getSystemAllocation() == null) {
             SystemAllocation systemAllocation = new SystemAllocation();
             systemAllocation.setCoin(2);
-            systemAllocation.setPriceMargin(BigDecimal.valueOf(0.03));
+            systemAllocation.setPriceMargin(BigDecimal.valueOf(0.04));
             systemAllocation.setReversePriceMargin(BigDecimal.ZERO);
             systemAllocation.setTickAmount(BigDecimal.ONE);
-            systemAllocation.setReverseMultipleAmount(1.2f);
+            systemAllocation.setReverseMultipleAmount(2.0f);
             systemAllocation.setStrategyOpen(true);
             systemAllocationService.saveSystemAllocation(systemAllocation);
         }
@@ -187,8 +188,13 @@ public class MoreCenterPriceMargin {
         /**check depth amount**/
         if (tickAmount.compareTo(buyAmount) == 1
                 || tickAmount.compareTo(sellAmount) == 1) {
-            log.warn("depth's amount is not enough!");
-            return false;
+            BigDecimal tempTickAmount = tickAmount.divide(BigDecimal.valueOf(2), 2);
+            /*挂单量减半*/
+            if (tempTickAmount.compareTo(buyAmount) != 1 && tempTickAmount.compareTo(sellAmount) != 1) {
+                tickAmount = tempTickAmount;
+                log.warn("tick_amount divide 2 and checkFree");
+            } else
+                return false;
         }
         /**check freeAmount and freePrice**/
         if (!validateFree(sellCenter, buyCenter, buyPrice, tickAmount))
@@ -201,13 +207,9 @@ public class MoreCenterPriceMargin {
         BigDecimal freeAmount = tradeCenterService.getFreeAmount(sellCenter);
         BigDecimal freePrice = tradeCenterService.getFreePrice(buyCenter);
         /**check free_amount**/
-        if (tickerAmount.compareTo(freeAmount) == 1) {
-//            log.warn("free amount is not enough , tick_amount :" + tickerAmount + ", free_amount:" + freeAmount);
+        if (tickerAmount.compareTo(freeAmount) == 1)
             return false;
-        }
         /**check free_price**/
-        if (buyPrice.multiply(tickerAmount).compareTo(freePrice) == 1)
-            return false;
-        return true;
+        return buyPrice.multiply(tickerAmount).compareTo(freePrice) != 1;
     }
 }

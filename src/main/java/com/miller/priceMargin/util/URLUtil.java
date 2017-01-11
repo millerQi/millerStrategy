@@ -51,6 +51,7 @@ public class URLUtil {
         } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());
+            return null;
         }
         // 使用finally块来关闭输入流
         finally {
@@ -102,6 +103,7 @@ public class URLUtil {
         } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());
+            return null;
         }
         //使用finally块来关闭输出流、输入流
         finally {
