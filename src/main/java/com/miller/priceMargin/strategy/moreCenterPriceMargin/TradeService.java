@@ -111,7 +111,7 @@ public class TradeService {
         }
         BigDecimal sellAvgPrice = sellOrderInfo.getAvgPrice();
         BigDecimal buyAvgPrice = buyOrderInfo.getAvgPrice();
-        BigDecimal dealGains = sellAvgPrice.subtract(buyAvgPrice);
+        BigDecimal dealGains = (sellAvgPrice.subtract(buyAvgPrice)).multiply(buyOrderInfo.getDealAmount());
         BigDecimal sellAmount = sellOrderInfo.getAmount();
         updateLastPrice(sellOrderInfo.getDealAmount(), buyOrderInfo.getDealAmount(), sellCenter, buyCenter, sellAvgPrice, buyAvgPrice);//修改最新净资产
         OppositeOrder oppositeOrder = new OppositeOrder();
